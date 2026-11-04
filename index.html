@@ -1,0 +1,1298 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#11131f">
+<title>English Walls</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{--ink:#1f2335;--muted:#6b7086;--scale:1;--r:18px;--bar:rgba(17,19,32,.82);--accent:#e63946}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font-family:'Nunito',system-ui,-apple-system,sans-serif;color:var(--ink);background:#eef1f6;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+h1,h2,h3,.brand{font-family:'Fredoka','Nunito',sans-serif;font-weight:600}
+a{color:#2563eb}
+button{font:inherit;cursor:pointer;color:inherit}
+[hidden]{display:none!important}
+.muted{color:var(--muted)}.small{font-size:.88rem}.center{text-align:center}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.45em;border:0;border-radius:999px;padding:.7em 1.2em;background:#fff;color:var(--ink);font-weight:800;box-shadow:0 1px 3px rgba(0,0,0,.14);text-decoration:none;white-space:nowrap;transition:transform .08s,filter .15s}
+.btn:hover{filter:brightness(.95)}.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--accent);color:#fff}
+.btn.blue{background:#2563eb;color:#fff}
+.btn.danger{background:#fee2e2;color:#b91c1c}
+.btn.small{padding:.45em .85em;font-size:.88rem}
+.btn.wide{width:100%}
+.btn.google{background:#fff;border:1.5px solid #dadce0;box-shadow:none}
+.btn.google svg{width:20px;height:20px}
+input,textarea,select{font:inherit;color:var(--ink);padding:.7em .85em;border:1.5px solid #d6dae5;border-radius:12px;width:100%;background:#fff;outline:none}
+input:focus,textarea:focus,select:focus{border-color:#6c8cff;box-shadow:0 0 0 3px rgba(108,140,255,.2)}
+textarea{min-height:120px;resize:vertical}
+input[type=range]{padding:0;border:0;box-shadow:none;accent-color:var(--accent)}
+label.f{display:block;font-weight:800;font-size:.8rem;margin:1em 0 .35em;color:#4a5068;text-transform:uppercase;letter-spacing:.04em}
+label.chk{display:flex;align-items:center;gap:.6em;margin:.8em 0;font-weight:700;cursor:pointer}
+label.chk input{width:20px;height:20px;accent-color:var(--accent);flex:none}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;align-items:end}
+@media(max-width:520px){.row2{grid-template-columns:1fr}}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;z-index:500;pointer-events:none;width:min(520px,calc(100% - 32px))}
+.toast{background:#1f2335;color:#fff;padding:.8em 1.1em;border-radius:14px;font-weight:700;box-shadow:0 10px 30px rgba(0,0,0,.25);animation:tin .25s ease;text-align:center}
+.toast.err{background:#b91c1c}.toast.ok{background:#15803d}
+.toast.out{opacity:0;transition:opacity .4s}
+@keyframes tin{from{transform:translateY(10px);opacity:0}}
+
+/* ---------- accueil ---------- */
+.home{min-height:100%;display:flex;align-items:center;justify-content:center;padding:24px}
+.home-card{width:min(440px,100%);background:rgba(255,255,255,.97);border-radius:26px;padding:30px 28px;box-shadow:0 24px 60px rgba(0,0,0,.35)}
+.home-card h2{margin:.4em 0 0;text-align:center}
+.brand{font-size:1.45rem;display:flex;align-items:center;gap:.4em}
+.brand.big{font-size:2.1rem;justify-content:center}
+.tag{text-align:center;color:var(--muted);margin:.3em 0 1.2em}
+.copy-row{display:flex;gap:8px}
+.copy-row input{flex:1;min-width:0}
+#code{text-transform:uppercase;letter-spacing:.2em;font-weight:800;font-size:1.2rem;text-align:center}
+.or{display:flex;align-items:center;gap:10px;color:var(--muted);font-weight:800;font-size:.78rem;text-transform:uppercase;margin:1.4em 0 1em}
+.or::before,.or::after{content:'';flex:1;height:1px;background:#e2e5ee}
+.home form .btn.wide{margin-top:12px}
+
+/* ---------- tableau de bord ---------- */
+.dash{min-height:100%;background:#f3f4f8}
+.dash-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 22px;background:#fff;box-shadow:0 1px 0 #e6e8ef;position:sticky;top:0;z-index:5;flex-wrap:wrap}
+.me{display:flex;align-items:center;gap:10px;font-weight:700}
+.me img{width:34px;height:34px;border-radius:50%}
+.dash-main{max-width:1200px;margin:0 auto;padding:26px 22px 80px}
+.dash-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.dash-head h1{margin:0;font-size:2rem}
+.wall-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:18px}
+.wtile{border-radius:20px;overflow:hidden;background:#fff;box-shadow:0 6px 20px rgba(20,25,50,.1);cursor:pointer;transition:transform .15s,box-shadow .15s;display:flex;flex-direction:column}
+.wtile:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(20,25,50,.16)}
+.wt-bg{height:130px}
+.wt-info{padding:12px 14px 14px}
+.wt-info b{display:block;font-family:Fredoka;font-size:1.15rem}
+.wt-info small{color:var(--muted)}
+.wt-meta{display:flex;align-items:center;gap:8px;margin-top:8px}
+.code{font-family:ui-monospace,Menlo,monospace;font-weight:800;background:#eef1f8;padding:.2em .55em;border-radius:8px;letter-spacing:.1em}
+.mdot{width:12px;height:12px;border-radius:50%}.m-open{background:#16a34a}.m-review{background:#f59e0b}.m-closed{background:#dc2626}
+.demo-tag{font-size:.7rem;background:#fde68a;color:#92400e;padding:.2em .6em;border-radius:99px;font-family:Nunito;font-weight:800}
+.empty-dash{grid-column:1/-1;text-align:center;padding:50px 20px;background:#fff;border-radius:20px}
+
+/* ---------- mur ---------- */
+.board{position:fixed;inset:0;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;gap:6px;padding:8px 10px;padding-top:max(8px,env(safe-area-inset-top));background:var(--bar);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:#fff;z-index:30;flex-wrap:wrap}
+.titles{flex:1 1 200px;min-width:0;padding:0 6px}
+.titles h1{margin:0;font-size:calc(1.3rem*var(--scale));line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.titles .sub{font-size:calc(.9rem*var(--scale));opacity:.78;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb-btn{background:rgba(255,255,255,.13);color:#fff;border:0;border-radius:12px;height:42px;min-width:42px;padding:0 .75em;font-weight:800;display:inline-flex;align-items:center;justify-content:center;gap:.35em;font-size:.95rem;white-space:nowrap}
+.tb-btn:hover{background:rgba(255,255,255,.24)}
+.tb-btn.on{background:#fff;color:#1f2335}
+.tb-btn.pending{background:#f59e0b;color:#231400;animation:pp 1.6s infinite}
+@keyframes pp{50%{box-shadow:0 0 0 5px rgba(245,158,11,.35)}}
+.tb-group{display:inline-flex;align-items:center;gap:4px}
+.seg-lbl{font-size:.72rem;opacity:.75;font-weight:800;margin-right:2px;text-transform:uppercase;letter-spacing:.04em}
+.seg{display:inline-flex;background:rgba(255,255,255,.12);border-radius:12px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;color:#fff;border-radius:9px;height:36px;padding:0 .7em;font-weight:800;display:inline-flex;align-items:center;gap:.3em;white-space:nowrap}
+.seg button:hover{background:rgba(255,255,255,.14)}
+.seg button.on.m-open{background:#16a34a}.seg button.on.m-review{background:#f59e0b;color:#231400}.seg button.on.m-closed{background:#dc2626}
+.status-strip{background:rgba(255,255,255,.93);color:#1f2335;text-align:center;font-weight:800;padding:.5em 1em;font-size:calc(.95rem*var(--scale));z-index:25;display:flex;align-items:center;justify-content:center;gap:.8em;flex-wrap:wrap}
+.status-strip.preview{background:#1d4ed8;color:#fff}
+.status-strip .btn{padding:.35em .9em;font-size:.85rem}
+.scroll{flex:1;overflow:auto;position:relative;-webkit-overflow-scrolling:touch}
+@media(max-width:700px){.lbl{display:none}.zoom{display:none!important}.seg-lbl{display:none}.titles{flex-basis:100%;order:-1;padding:2px 4px 4px}}
+
+.lanes{display:flex;gap:calc(16px*var(--scale));padding:calc(18px*var(--scale));align-items:flex-start;width:max-content;min-width:100%}
+.lane{width:calc(330px*var(--scale));flex:none;display:flex;flex-direction:column;gap:calc(12px*var(--scale))}
+.lane-head{background:rgba(255,255,255,.94);border-radius:16px;padding:.5em .55em .5em .9em;font-family:Fredoka;font-weight:600;font-size:calc(1.2rem*var(--scale));display:flex;align-items:center;gap:.4em;box-shadow:0 4px 14px rgba(0,0,0,.14)}
+.lane-title{flex:1;min-width:0;overflow-wrap:anywhere}
+.lane-add{border:0;background:#1f2335;color:#fff;border-radius:10px;width:36px;height:36px;font-size:1.2rem;flex:none}
+.lane-list{display:flex;flex-direction:column;gap:calc(12px*var(--scale));min-height:90px;padding-bottom:40px}
+.lane-new{flex:none;width:calc(230px*var(--scale));border:2.5px dashed rgba(255,255,255,.85);background:rgba(255,255,255,.25);color:#fff;font-weight:800;border-radius:16px;padding:1em;text-shadow:0 1px 3px rgba(0,0,0,.5);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.f-wall .list{column-width:calc(300px*var(--scale));column-gap:calc(16px*var(--scale));padding:calc(18px*var(--scale))}
+.f-wall .card{display:inline-block;width:100%;margin-bottom:calc(16px*var(--scale));break-inside:avoid;vertical-align:top}
+.f-grid .list{display:grid;grid-template-columns:repeat(auto-fill,minmax(calc(290px*var(--scale)),1fr));gap:calc(16px*var(--scale));padding:calc(18px*var(--scale));align-items:start}
+.f-grid .card.sz-L{grid-column:span 2}
+.f-stack .list{display:flex;flex-direction:column;gap:14px;padding:14px;max-width:640px;margin:0 auto}
+.f-free .canvas{position:relative;min-width:100%;min-height:100%}
+.f-free .card{position:absolute}
+@media(max-width:700px){.lanes{flex-direction:column;width:100%;padding:12px}.lane{width:100%}.lane-new{width:100%}.f-grid .card.sz-L{grid-column:auto}.f-wall .list,.f-grid .list{padding:12px}.lane-list{min-height:40px;padding-bottom:10px}}
+.empty{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);background:rgba(255,255,255,.94);padding:1.2em 1.6em;border-radius:20px;font-weight:800;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.2);max-width:90%;font-size:calc(1.05rem*var(--scale))}
+.fab{position:fixed;right:max(18px,env(safe-area-inset-right));bottom:max(18px,env(safe-area-inset-bottom));width:66px;height:66px;border-radius:50%;border:0;background:var(--accent);color:#fff;font-size:2.3rem;box-shadow:0 10px 28px rgba(230,57,70,.5);z-index:40;display:flex;align-items:center;justify-content:center;line-height:1}
+
+/* ---------- cartes ---------- */
+.card{position:relative;background:var(--cbg,#fff);border-radius:var(--r);box-shadow:0 6px 22px rgba(12,16,35,.22);overflow:hidden;container-type:inline-size;font-size:calc(1rem*var(--scale));color:var(--ink)}
+.card.dark{color:#f3f4f8}.card.dark .card-foot{color:#b8bdd0}.card.dark .ct,.card.dark .fbtn{background:rgba(255,255,255,.14)}
+.card-head{display:flex;align-items:center;gap:6px;padding:6px 6px 0 8px;min-height:30px}
+.drag{cursor:grab;font-size:1.25em;opacity:.45;padding:0 4px;touch-action:none;user-select:none;-webkit-user-select:none}
+.drag:active{cursor:grabbing}
+.card-tools{margin-left:auto;display:flex;gap:4px;opacity:0;transition:opacity .15s}
+.card:hover .card-tools,.touch .card-tools,.card:focus-within .card-tools{opacity:1}
+.ct{border:0;background:rgba(0,0,0,.07);border-radius:9px;min-width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;font-size:.95rem;text-decoration:none;color:inherit}
+.ct:hover{background:rgba(0,0,0,.14)}
+.badge{font-size:.75em;font-weight:800;padding:.25em .6em;border-radius:99px;white-space:nowrap}
+.b-hidden{background:#334155;color:#fff}.b-pend{background:#fef3c7;color:#92400e}
+.card-body{padding:.55em 1em .9em}
+.card-head+.card-body{padding-top:.2em}
+.t-text .card-body,.t-highlight .card-body{font-size:calc(1em*var(--fs,1))}
+.card h3{margin:.15em 0 .35em;font-size:1.25em;line-height:1.2;overflow-wrap:anywhere}
+.txt{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5}
+.pimg{display:block;width:calc(100% + 2em);margin:-.55em -1em .7em;max-height:520px;object-fit:cover;cursor:zoom-in}
+.card-head+.card-body .pimg{margin-top:.15em}
+.card-foot{display:flex;align-items:center;gap:6px;padding:0 .8em .7em;font-size:.88em;color:var(--muted)}
+.card-foot .sp{flex:1}
+.who{font-weight:800}
+.fbtn{border:0;background:rgba(0,0,0,.05);border-radius:99px;padding:.3em .7em;font-weight:800;font-size:.95em}
+.fbtn.on{background:#ffe4e6}
+.card.is-hidden{opacity:.5;outline:3px dashed #475569;outline-offset:-3px}
+.card.is-pending{outline:3px dashed #f59e0b;outline-offset:-3px}
+.card.hl{border:calc(6px*var(--scale)) solid var(--hl);box-shadow:0 0 0 5px color-mix(in srgb,var(--hl) 22%,transparent),0 10px 30px rgba(0,0,0,.28)}
+.hl-inner{text-align:center}
+.hl-icon{font-size:2.2em;line-height:1.1}
+.hl h3{color:var(--hl);font-size:1.5em}
+.hl .txt{font-weight:800;font-size:1.2em}
+.card.pulse{animation:hlp 2.2s ease-in-out infinite}
+@keyframes hlp{50%{box-shadow:0 0 0 14px color-mix(in srgb,var(--hl) 30%,transparent),0 10px 30px rgba(0,0,0,.28)}}
+audio{width:100%;margin:.3em 0;display:block}
+.plink{display:flex;align-items:center;gap:.7em;padding:.7em;border-radius:12px;background:rgba(0,0,0,.05);text-decoration:none;color:inherit;margin-bottom:.4em}
+.plink img{width:32px;height:32px;border-radius:8px;flex:none}
+.plink span{flex:1;min-width:0;display:flex;flex-direction:column}
+.plink b{overflow-wrap:anywhere}.plink small{opacity:.65}
+.plink i{font-style:normal;font-weight:800}
+.vid{position:relative;padding-top:56.25%;border-radius:12px;overflow:hidden;background:#000}
+.vid iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.emb-bar{display:flex;align-items:center;gap:6px;font-weight:800;margin-bottom:.5em}
+.emb-bar span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.emb{border-radius:12px;overflow:hidden;background:#f1f3f8;height:calc(460px*var(--scale))}
+.sz-S .emb{height:calc(300px*var(--scale))}.sz-L .emb{height:calc(640px*var(--scale))}
+.emb iframe{width:100%;height:100%;border:0;display:block}
+.card.fixed-h{display:flex;flex-direction:column}
+.card.fixed-h .card-body{flex:1;min-height:0;display:flex;flex-direction:column;overflow:auto}
+.card.fixed-h .emb{flex:1;height:auto;min-height:0}
+.card.fixed-h .vid{flex:1;padding-top:0}
+.card.fixed-h.widget .card-body{justify-content:center}
+.rz{position:absolute;right:0;bottom:0;width:24px;height:24px;cursor:nwse-resize;touch-action:none;background:linear-gradient(135deg,transparent 50%,rgba(0,0,0,.28) 50%);z-index:3}
+.card.dragging{box-shadow:0 20px 50px rgba(0,0,0,.35);z-index:9999!important}
+.is-dragging iframe{pointer-events:none}
+.ghost{opacity:.35}.chosen{box-shadow:0 18px 40px rgba(0,0,0,.35)}
+.w-title{font-family:Fredoka;font-weight:600;text-align:center;font-size:1.15em;margin-bottom:.1em}
+.w-digits{font-family:Fredoka;font-weight:600;font-variant-numeric:tabular-nums;text-align:center;line-height:1.05;font-size:clamp(30px,24cqw,320px)}
+.w-digits small{font-size:.38em;opacity:.7}
+.t-clock .w-digits{font-size:clamp(30px,21cqw,300px)}
+.w-date{text-align:center;font-weight:800;font-size:clamp(14px,5.4cqw,60px);opacity:.78;margin-top:.15em}
+.w-bar{height:10px;border-radius:99px;background:rgba(0,0,0,.09);overflow:hidden;margin:.5em 0 .2em}
+.w-bar i{display:block;height:100%;background:#16a34a;border-radius:99px;transition:width .2s linear}
+.card.warn .w-bar i{background:#f59e0b}
+.card.done{animation:blink 1s steps(2) infinite}
+.card.done .w-digits{color:#dc2626}
+@keyframes blink{50%{background:#fecaca}}
+.w-ctrl{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:.5em}
+.wb{border:0;background:rgba(0,0,0,.07);border-radius:10px;min-width:42px;height:40px;font-weight:800;padding:0 .6em}
+.wb.big{background:#1f2335;color:#fff;min-width:64px;font-size:1.1em}
+.card.dark .wb{background:rgba(255,255,255,.14)}
+
+/* ---------- fenêtres ---------- */
+.modal-back{position:fixed;inset:0;background:rgba(10,12,28,.55);display:flex;align-items:center;justify-content:center;z-index:200;padding:16px;animation:fade .15s}
+@keyframes fade{from{opacity:0}}
+.modal{background:#fff;border-radius:22px;width:min(560px,100%);max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);display:flex;flex-direction:column;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+.modal.wide{width:min(760px,100%)}
+.modal-head{display:flex;align-items:center;gap:10px;padding:16px 18px 6px}
+.modal-head h2{margin:0;flex:1;font-size:1.35rem}
+.x{border:0;background:#f1f3f8;border-radius:50%;width:38px;height:38px;font-size:1rem;flex:none}
+.modal-body{padding:4px 18px 14px;overflow:auto}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;padding:12px 18px 16px;border-top:1px solid #eef0f5;flex-wrap:wrap}
+@media(max-width:600px){.modal-back{align-items:flex-end;padding:0}.modal,.modal.wide{width:100%;border-radius:22px 22px 0 0;max-height:94vh;max-height:94dvh}}
+.type-chips{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 4px}
+.chip{border:1.5px solid #e1e4ee;background:#fff;border-radius:99px;padding:.5em .9em;font-weight:800}
+.chip.on{background:#1f2335;color:#fff;border-color:#1f2335}
+.swatches{display:flex;flex-wrap:wrap;gap:8px}
+.sw{position:relative}
+.sw input{position:absolute;opacity:0;pointer-events:none}
+.sw span{display:block;width:36px;height:36px;border-radius:50%;background:var(--c);border:2px solid rgba(0,0,0,.15);cursor:pointer}
+.sw input:checked+span{box-shadow:0 0 0 3px #fff,0 0 0 6px #1f2335}
+.drop{border:2.5px dashed #cfd5e3;border-radius:16px;padding:16px;text-align:center;cursor:pointer;margin-top:10px;color:var(--muted);font-weight:800}
+.drop img{max-width:100%;max-height:260px;border-radius:10px}
+.rec{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px}
+.btn.recording{background:#dc2626;animation:pp 1s infinite}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px}
+.tabs button{border:0;background:#f1f3f8;border-radius:99px;padding:.5em 1em;font-weight:800}
+.tabs button.on{background:#1f2335;color:#fff}
+.formats{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.fmt{position:relative}
+.fmt input{position:absolute;opacity:0}
+.fmt span{display:block;border:2px solid #e1e4ee;border-radius:14px;padding:.7em;cursor:pointer;height:100%}
+.fmt small{display:block;color:var(--muted);font-weight:600;margin-top:.2em}
+.fmt input:checked+span{border-color:var(--accent);background:#fff1f2}
+.bg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px}
+.bg-tile{height:84px;border-radius:14px;border:3px solid transparent;position:relative;overflow:hidden;padding:0;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.bg-tile span{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(transparent,rgba(0,0,0,.7));color:#fff;font-size:.72rem;font-weight:800;padding:14px 6px 5px;text-align:left}
+.bg-tile.on{border-color:var(--accent);box-shadow:0 0 0 3px rgba(230,57,70,.3)}
+.sec-row{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.sec-row input{flex:1}
+.act-list{display:grid;gap:10px;margin-top:10px}
+.act-list .btn{justify-content:flex-start}
+.share{text-align:center}
+.code-big{font-family:ui-monospace,Menlo,monospace;font-size:3.2rem;font-weight:800;letter-spacing:.18em;margin:.1em 0}
+.qr{display:flex;justify-content:center;margin:16px 0}
+.qr img,.qr canvas{border:12px solid #fff;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.14);max-width:100%;height:auto}
+.modal.big-share{width:min(980px,100%)}
+.modal.big-share .code-big{font-size:5rem}
+.tray{position:fixed;top:0;right:0;bottom:0;width:min(400px,100%);background:#fff;z-index:150;box-shadow:-10px 0 40px rgba(0,0,0,.25);display:flex;flex-direction:column;animation:slide .2s}
+@keyframes slide{from{transform:translateX(30px);opacity:0}}
+.tray-head{display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid #eef0f5;gap:10px}
+.tray-head h3{flex:1;margin:0}
+.tray-actions{padding:8px 16px 0}
+.tray-list{overflow:auto;padding:12px 16px 30px;display:flex;flex-direction:column;gap:12px}
+.tray-item{border:1.5px solid #eceef4;border-radius:16px;padding:12px}
+.ti-meta{font-size:.9rem;margin-bottom:6px}
+.ti-prev{font-size:.95rem;max-height:220px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
+.ti-prev img{max-width:100%;border-radius:10px;max-height:160px}
+.ti-btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.cm-list{display:flex;flex-direction:column;gap:8px;max-height:50vh;overflow:auto;margin-bottom:12px}
+.cm{background:#f4f6fa;border-radius:14px;padding:.6em 2.6em .6em .8em;position:relative;overflow-wrap:anywhere}
+.cm b{font-size:.85rem;display:block}
+.cm .ct{position:absolute;right:6px;top:6px;width:28px;height:28px;min-width:28px}
+.cm-form{display:flex;gap:8px}
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:300;display:flex;align-items:center;justify-content:center;cursor:zoom-out;padding:20px}
+.lightbox img{max-width:100%;max-height:100%;border-radius:10px}
+.loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-family:Fredoka;font-size:1.4rem;color:#6b7086}
+</style>
+</head>
+<body>
+<div id="app"><div class="loading">🧱 English Walls…</div></div>
+<div id="toast"></div>
+<script type="module">
+/* =====================================================================
+   ENGLISH WALLS — mur collaboratif pour la classe d'anglais
+   ===================================================================== */
+const firebaseConfig = {
+  apiKey: "AIzaSyCq15WFQuXQbSTf1jGGjRPa6PFD_vZ3ULY",
+  authDomain: "english-walls.firebaseapp.com",
+  projectId: "english-walls",
+  storageBucket: "english-walls.firebasestorage.app",
+  messagingSenderId: "872432508187",
+  appId: "1:872432508187:web:9daf90ccc42c437fa187be"
+};
+const FB_VERSION = '11.0.2';
+
+/* ---------------- utilitaires ---------------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const linkify = s => esc(s).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+const clone = o => JSON.parse(JSON.stringify(o));
+const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const genCode = (n = 6) => Array.from({ length: n }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join('');
+const genId = () => Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-3);
+function setPath(o, path, v) { const k = path.split('.'); let c = o; for (let i = 0; i < k.length - 1; i++) { if (typeof c[k[i]] !== 'object' || c[k[i]] === null) c[k[i]] = {}; c = c[k[i]]; } c[k[k.length - 1]] = v; }
+function toast(msg, kind = '') { const d = document.createElement('div'); d.className = 'toast ' + kind; d.textContent = msg; $('#toast').appendChild(d); setTimeout(() => d.classList.add('out'), 3000); setTimeout(() => d.remove(), 3500); }
+function errMsg(e) {
+  const c = String(e?.code || '');
+  if (c.includes('permission-denied')) return "Action refusée par les règles de sécurité.";
+  if (c.includes('popup-closed') || c.includes('cancelled-popup')) return 'Connexion annulée.';
+  if (c.includes('popup-blocked')) return 'Fenêtre de connexion bloquée par le navigateur : autorisez les pop-ups.';
+  if (c.includes('unauthorized-domain')) return "Ce site n'est pas autorisé dans Firebase (Authentication → Paramètres → Domaines autorisés).";
+  if (c.includes('operation-not-allowed') || c.includes('admin-restricted')) return "Méthode de connexion non activée dans Firebase Authentication.";
+  if (c.includes('unavailable')) return 'Connexion au serveur impossible pour le moment.';
+  return e?.message || String(e);
+}
+async function guard(fn) { try { return await fn(); } catch (e) { console.error(e); toast(errMsg(e), 'err'); } }
+const hostOf = u => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return ''; } };
+const ytId = u => (String(u || '').match(/(?:youtu\.be\/|v=|embed\/|shorts\/|live\/)([\w-]{11})/) || [])[1] || null;
+const quizletId = u => (String(u || '').match(/quizlet\.com\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?(\d{5,})/i) || [])[1] || null;
+function embedUrl(raw) { let u = String(raw || '').trim(); const m = u.match(/src=["']([^"']+)["']/i); if (m) u = m[1]; if (u && !/^https?:\/\//i.test(u)) u = 'https://' + u; try { new URL(u); return u; } catch { return null; } }
+const clean = o => JSON.parse(JSON.stringify(o));
+class Fail extends Error {}
+const fail = m => { throw new Fail(m); };
+
+/* ---------------- fonds d'écran (créations originales en SVG) ---------------- */
+const BG = (() => {
+  const wrap = (defs, inner) => `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1600 900' preserveAspectRatio='xMidYMid slice'><defs>${defs}</defs>${inner}</svg>`;
+  const url = svg => `url("data:image/svg+xml,${encodeURIComponent(svg)}") center/cover no-repeat`;
+  const rng = seed => () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+  const lg = (id, stops, x2 = 0, y2 = 1) => `<linearGradient id='${id}' x1='0' y1='0' x2='${x2}' y2='${y2}'>${stops.map((c, i) => `<stop offset='${(i / (stops.length - 1)).toFixed(2)}' stop-color='${c}'/>`).join('')}</linearGradient>`;
+  const star = (cx, cy, r, fill) => { const p = []; for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * .42 : r; p.push((cx + rr * Math.cos(a)).toFixed(1) + ',' + (cy + rr * Math.sin(a)).toFixed(1)); } return `<polygon points='${p.join(' ')}' fill='${fill}'/>`; };
+  const LEAF = 'M0,-50 L8,-30 L25,-38 L20,-15 L40,-18 L30,0 L45,8 L18,15 L22,35 L3,25 L2,50 L-2,50 L-3,25 L-22,35 L-18,15 L-45,8 L-30,0 L-40,-18 L-20,-15 L-25,-38 L-8,-30 Z';
+  const full = f => `<rect width='1600' height='900' fill='${f}'/>`;
+  const gen = {
+    london() {
+      const S = '#2d1b3f', cx = 1010, cy = 540, R = 230; let eye = '', turrets = '', refl = '';
+      for (let i = 0; i < 20; i++) { const a = i * Math.PI / 10, x = cx + R * Math.cos(a), y = cy + R * Math.sin(a); eye += `<line x1='${cx}' y1='${cy}' x2='${x.toFixed(0)}' y2='${y.toFixed(0)}' stroke='${S}' stroke-width='3'/><ellipse cx='${x.toFixed(0)}' cy='${y.toFixed(0)}' rx='12' ry='9' fill='${S}'/>`; }
+      for (let x = 380; x < 700; x += 40) turrets += `<polygon points='${x},560 ${x + 10},528 ${x + 20},560' fill='${S}'/><rect x='${x + 22}' y='575' width='8' height='22' fill='#ffcf8a' opacity='.7'/>`;
+      for (let i = 0; i < 12; i++) refl += `<rect x='${80 + i * 130}' y='${840 + (i % 3) * 14}' width='${60 + (i % 4) * 20}' height='3' fill='#ffd29a' opacity='.35'/>`;
+      return wrap(lg('g', ['#3d2a7a', '#b54a8c', '#ff8e6b', '#ffd29a']), `${full('url(#g)')}<circle cx='640' cy='660' r='130' fill='#ffe0a3' opacity='.9'/>
+      <circle cx='${cx}' cy='${cy}' r='${R}' fill='none' stroke='${S}' stroke-width='10'/><circle cx='${cx}' cy='${cy}' r='${R - 20}' fill='none' stroke='${S}' stroke-width='3'/>${eye}<circle cx='${cx}' cy='${cy}' r='18' fill='${S}'/>
+      <polygon points='${cx},${cy} ${cx - 130},820 ${cx - 108},820' fill='${S}'/><polygon points='${cx},${cy} ${cx + 130},820 ${cx + 108},820' fill='${S}'/>
+      <g fill='${S}'><rect x='360' y='560' width='360' height='260'/>${''}<rect x='270' y='300' width='90' height='520'/><polygon points='270,300 315,165 360,300'/><rect x='312' y='118' width='6' height='60'/><rect x='262' y='290' width='106' height='16'/><rect x='262' y='420' width='106' height='10'/></g>${turrets}
+      <circle cx='315' cy='362' r='30' fill='#ffe6b0'/><line x1='315' y1='362' x2='315' y2='340' stroke='${S}' stroke-width='4'/><line x1='315' y1='362' x2='331' y2='368' stroke='${S}' stroke-width='4'/>
+      <g fill='${S}'><rect x='1262' y='420' width='70' height='400'/><polygon points='1256,420 1297,326 1338,420'/><rect x='1462' y='420' width='70' height='400'/><polygon points='1456,420 1497,326 1538,420'/><rect x='1332' y='452' width='130' height='22'/><rect x='1180' y='692' width='420' height='26'/></g>
+      <path d='M1180,694 Q1235,560 1264,470 M1530,470 Q1570,590 1600,650' stroke='${S}' stroke-width='8' fill='none'/>
+      <rect y='815' width='1600' height='85' fill='#3a2457'/>${refl}`);
+    },
+    nyc() {
+      const r = rng(11); let st = '', back = '', front = '', esw = '';
+      for (let i = 0; i < 90; i++) st += `<circle cx='${(r() * 1600) | 0}' cy='${(r() * 430) | 0}' r='${(r() * 1.8 + .4).toFixed(1)}' fill='#fff' opacity='${(r() * .7 + .3).toFixed(2)}'/>`;
+      let x = -20; while (x < 1620) { const w = 60 + r() * 80, hh = 260 + r() * 300; back += `<rect x='${x | 0}' y='${(900 - hh) | 0}' width='${w | 0}' height='${hh | 0}' fill='#2a2f63'/>`; x += w - 10; }
+      for (let wy = 320; wy < 880; wy += 26) for (let wx = 750; wx < 850; wx += 17) if (r() < .4) esw += `<rect x='${wx}' y='${wy}' width='6' height='10' fill='#ffd27a' opacity='.8'/>`;
+      x = -10; while (x < 1610) { const w = 50 + r() * 100, hh = 150 + r() * 330, y = 900 - hh; front += `<rect x='${x | 0}' y='${y | 0}' width='${w | 0}' height='${hh | 0}' fill='#141838'/>`; for (let wy = y + 16; wy < 880; wy += 24) for (let wx = x + 9; wx < x + w - 12; wx += 17) if (r() < .32) front += `<rect x='${wx | 0}' y='${wy | 0}' width='7' height='11' fill='#ffd27a' opacity='${(.45 + r() * .55).toFixed(2)}'/>`; x += w + 6; }
+      const es = `<g fill='#10132e'><rect x='740' y='420' width='120' height='480'/><rect x='760' y='300' width='80' height='600'/><rect x='775' y='240' width='50' height='70'/><rect x='788' y='190' width='24' height='60'/><rect x='797' y='100' width='6' height='100'/></g>${esw}`;
+      return wrap(lg('g', ['#0b1033', '#3b1f6e', '#c2437a']), `${full('url(#g)')}${st}<circle cx='1300' cy='150' r='62' fill='#fff4d6' opacity='.95'/>${back}${es}${front}`);
+    },
+    route66() {
+      let stripes = '', dash = '';
+      for (let i = 0; i < 6; i++) stripes += `<rect x='600' y='${470 + i * 15}' width='400' height='${(3 + i * 1.5).toFixed(1)}' fill='#e8507a'/>`;
+      for (let i = 0; i < 9; i++) { const t0 = Math.pow(i / 9, 1.5), t1 = Math.pow((i + .45) / 9, 1.5); const y0 = 560 + 340 * t0, y1 = 560 + 340 * t1, w0 = 2 + 20 * t0, w1 = 2 + 20 * t1; dash += `<polygon points='${800 - w0},${y0.toFixed(0)} ${800 + w0},${y0.toFixed(0)} ${800 + w1},${y1.toFixed(0)} ${800 - w1},${y1.toFixed(0)}' fill='#ffd166'/>`; }
+      const cactus = (x, y, s) => `<g transform='translate(${x},${y}) scale(${s})' fill='#2a1f3d'><rect x='-14' y='-170' width='28' height='170' rx='14'/><rect x='-52' y='-110' width='22' height='60' rx='11'/><rect x='-52' y='-62' width='50' height='20' rx='10'/><rect x='30' y='-140' width='22' height='70' rx='11'/><rect x='2' y='-84' width='50' height='20' rx='10'/></g>`;
+      return wrap(lg('g', ['#2b1055', '#7a2d8c', '#e8507a', '#ffb35c']) + lg('d', ['#d9773f', '#8a3b2a']), `${full('url(#g)')}<circle cx='800' cy='470' r='190' fill='#ffd66b'/>${stripes}
+      <path d='M0,560 L0,380 L140,380 L170,410 L330,410 L370,470 L420,560Z' fill='#5c2340'/><path d='M1600,560 L1600,400 L1430,400 L1400,440 L1260,440 L1230,500 L1180,560Z' fill='#5c2340'/><path d='M420,560 L470,500 L560,500 L600,560Z' fill='#6e2a46'/>
+      <rect y='560' width='1600' height='340' fill='url(#d)'/><polygon points='772,560 828,560 1350,900 250,900' fill='#33313f'/>${dash}${cactus(180, 840, 1.2)}${cactus(1480, 790, .9)}
+      <rect x='1296' y='700' width='10' height='190' fill='#555'/><g transform='translate(1240,620)'><path d='M0,0 h122 v22 q0,92 -61,122 q-61,-30 -61,-122z' fill='#f5f0e6' stroke='#222' stroke-width='6'/><text x='61' y='40' text-anchor='middle' font-family='Arial,Helvetica,sans-serif' font-weight='700' font-size='22' fill='#222'>US</text><text x='61' y='104' text-anchor='middle' font-family='Arial Black,Arial,sans-serif' font-weight='900' font-size='60' fill='#222'>66</text></g>`);
+    },
+    goldengate() {
+      const deck = 600; const pts = []; let sus = '';
+      const cy = x => x < 450 ? 210 + 370 * Math.pow((450 - x) / 550, 1.7) : x <= 1150 ? 210 + 360 * (1 - Math.pow((x - 800) / 350, 2)) : 210 + 370 * Math.pow((x - 1150) / 550, 1.7);
+      for (let x = -100; x <= 1700; x += 10) { const y = Math.min(cy(x), deck + 20); pts.push(`${x},${y.toFixed(1)}`); if (x % 30 === 0 && y < deck - 4) sus += `<line x1='${x}' y1='${y.toFixed(0)}' x2='${x}' y2='${deck}' stroke='#b8322a' stroke-width='2'/>`; }
+      const tower = x => `<g fill='#c0392b'><rect x='${x}' y='195' width='16' height='505'/><rect x='${x + 36}' y='195' width='16' height='505'/>${[215, 320, 440, 560].map(y => `<rect x='${x}' y='${y}' width='52' height='14'/>`).join('')}</g>`;
+      return wrap(lg('g', ['#9fd3ff', '#d9ecfb', '#fde2c8']) + lg('w', ['#4a8ab8', '#24527d']) + `<filter id='b'><feGaussianBlur stdDeviation='28'/></filter>`,
+        `${full('url(#g)')}<path d='M0,660 L0,520 Q200,420 380,520 Q480,570 560,660Z' fill='#5d7f73'/><path d='M1050,660 Q1250,450 1450,500 Q1550,520 1600,540 L1600,660Z' fill='#6b8f80'/>
+        <rect y='640' width='1600' height='260' fill='url(#w)'/><g filter='url(#b)' fill='#fff' opacity='.75'><ellipse cx='300' cy='640' rx='420' ry='70'/><ellipse cx='1300' cy='650' rx='480' ry='80'/><ellipse cx='800' cy='300' rx='300' ry='50' opacity='.6'/></g>
+        ${sus}<polyline points='${pts.join(' ')}' fill='none' stroke='#b8322a' stroke-width='6'/>${tower(424)}${tower(1124)}<rect x='-10' y='${deck}' width='1620' height='18' fill='#a8302a'/><rect x='-10' y='${deck + 18}' width='1620' height='6' fill='#7d2420'/>`);
+    },
+    usflag() {
+      const sh = 900 / 13, cw = 680, ch = 7 * sh; let st = '', stars = '';
+      for (let i = 0; i < 13; i++) st += `<rect y='${(i * sh).toFixed(1)}' width='1600' height='${(sh + .6).toFixed(1)}' fill='${i % 2 ? '#f7f1e8' : '#c4434b'}'/>`;
+      for (let row = 0; row < 9; row++) { const n = row % 2 ? 5 : 6; for (let c = 0; c < n; c++) { const x = row % 2 ? (c + 1) * cw / 6 : (c + .5) * cw / 6; stars += star(x, (row + 1) * ch / 10, 19, '#f7f1e8'); } }
+      return wrap('', `${st}<rect width='${cw}' height='${ch.toFixed(1)}' fill='#33386b'/>${stars}<rect width='1600' height='900' fill='#fff' opacity='.12'/>`);
+    },
+    unionjack() {
+      return wrap('', `${full('#1f3a7a')}<path d='M0,0 L1600,900 M1600,0 L0,900' stroke='#f5efe6' stroke-width='170'/><path d='M0,0 L1600,900 M1600,0 L0,900' stroke='#c8343f' stroke-width='56'/><path d='M800,0 V900 M0,450 H1600' stroke='#f5efe6' stroke-width='280'/><path d='M800,0 V900 M0,450 H1600' stroke='#c8343f' stroke-width='170'/><rect width='1600' height='900' fill='#fff' opacity='.1'/>`);
+    },
+    phonebox() {
+      let win = '', bw = '';
+      for (let r = 0; r < 4; r++) for (let c = 0; c < 3; c++) win += `<rect x='${8 + c * 16}' y='${40 + r * 16}' width='12' height='12' rx='1'/>`;
+      for (let i = 0; i < 5; i++) bw += `<rect x='${8 + i * 22}' y='8' width='16' height='16' rx='2'/>`;
+      for (let i = 0; i < 4; i++) bw += `<rect x='${30 + i * 22}' y='42' width='16' height='16' rx='2'/>`;
+      const p = `<pattern id='p' width='260' height='260' patternUnits='userSpaceOnUse'>
+        <g transform='translate(30,24)'><path d='M0,22 Q0,0 30,0 Q60,0 60,22 V112 H0Z' fill='#d62828'/><rect x='6' y='26' width='48' height='8' fill='#1d1d1d'/><g fill='#fdf6e3'>${win}</g><rect x='-4' y='110' width='68' height='8' fill='#a4161a'/></g>
+        <g transform='translate(118,150)'><rect width='124' height='76' rx='10' fill='#d62828'/><g fill='#fdf6e3'>${bw}</g><rect x='0' y='34' width='124' height='4' fill='#a4161a'/><rect x='6' y='42' width='18' height='30' rx='2' fill='#1d1d1d'/><circle cx='28' cy='78' r='10' fill='#222'/><circle cx='98' cy='78' r='10' fill='#222'/></g>
+        ${star(190, 50, 12, '#1d3557')}${star(60, 205, 9, '#1d3557')}</pattern>`;
+      return wrap(p, `${full('#f6efe0')}${full('url(#p)')}`);
+    },
+    tartan() {
+      const p = `<pattern id='t' width='200' height='200' patternUnits='userSpaceOnUse'><rect width='200' height='200' fill='#1e4d3a'/><rect y='40' width='200' height='60' fill='#0d2b4a' opacity='.6'/><rect x='40' width='60' height='200' fill='#0d2b4a' opacity='.6'/><rect y='130' width='200' height='14' fill='#b3262f' opacity='.75'/><rect x='130' width='14' height='200' fill='#b3262f' opacity='.75'/><rect y='168' width='200' height='4' fill='#f2c94c' opacity='.85'/><rect x='168' width='4' height='200' fill='#f2c94c' opacity='.85'/><rect y='10' width='200' height='3' fill='#fff' opacity='.35'/><rect x='10' width='3' height='200' fill='#fff' opacity='.35'/></pattern>`;
+      return wrap(p, full('url(#t)'));
+    },
+    ireland() {
+      const sham = (x, y, s, c) => `<g transform='translate(${x},${y}) scale(${s})' fill='${c}'><circle cx='0' cy='-14' r='12'/><circle cx='-13' cy='4' r='12'/><circle cx='13' cy='4' r='12'/><path d='M0,4 Q4,24 14,34' stroke='${c}' stroke-width='4' fill='none'/></g>`;
+      const r = rng(3); let sh = '', rb = ''; ['#e63946', '#f4a261', '#ffd166', '#52b788', '#4895ef', '#7b2cbf'].forEach((c, i) => { const R = 430 - i * 22; rb += `<path d='M${1150 - R},700 A${R},${R} 0 0 1 ${1150 + R},700' stroke='${c}' stroke-width='22' fill='none' opacity='.6'/>`; });
+      for (let i = 0; i < 26; i++) sh += sham((r() * 1600) | 0, (720 + r() * 170) | 0, (.8 + r() * 1.4).toFixed(2), ['#1b7a3e', '#2b9348', '#007f5f'][i % 3]);
+      return wrap(lg('g', ['#a9def9', '#e4f7f0']), `${full('url(#g)')}<circle cx='300' cy='170' r='70' fill='#fff7c2'/>${rb}<path d='M0,620 Q300,520 650,610 Q950,690 1600,560 L1600,900 L0,900Z' fill='#80b918'/><path d='M0,700 Q400,600 800,700 Q1200,790 1600,660 L1600,900 L0,900Z' fill='#55a630'/><path d='M0,790 Q500,700 1000,790 Q1300,840 1600,760 L1600,900 L0,900Z' fill='#2b9348'/>${sh}`);
+    },
+    canada() {
+      return wrap('', `${full('#f7f3ee')}<rect width='400' height='900' fill='#c8343f'/><rect x='1200' width='400' height='900' fill='#c8343f'/><path d='${LEAF}' transform='translate(800,440) scale(5.4)' fill='#c8343f'/><rect width='1600' height='900' fill='#fff' opacity='.1'/>`);
+    },
+    outback() {
+      const r = rng(17); let tufts = '';
+      for (let i = 0; i < 40; i++) { const x = (r() * 1600) | 0, y = (680 + r() * 210) | 0, s = (.6 + r()).toFixed(2); tufts += `<path transform='translate(${x},${y}) scale(${s})' d='M0,0 L-14,-22 M0,0 L-5,-28 M0,0 L5,-28 M0,0 L14,-22' stroke='#6a7f3a' stroke-width='3' stroke-linecap='round'/>`; }
+      return wrap(lg('g', ['#3a1c71', '#d76d77', '#ffaf7b']) + lg('u', ['#d1521f', '#8f2d14']), `${full('url(#g)')}<circle cx='1180' cy='420' r='90' fill='#ffe3a3'/><path d='M260,640 Q300,520 420,500 Q600,470 820,480 Q1020,488 1120,540 Q1180,580 1220,640Z' fill='url(#u)'/><path d='M420,520 Q430,580 440,640 M600,490 Q610,560 615,640 M820,485 Q825,560 830,640 M1000,500 Q1010,570 1020,640' stroke='#7a2410' stroke-width='5' fill='none' opacity='.6'/><rect y='640' width='1600' height='260' fill='#c2581f'/><rect y='640' width='1600' height='18' fill='#a8441a'/>${tufts}`);
+    },
+    canyon() {
+      const cols = ['#f4a259', '#e07a3f', '#c4552c', '#d98f4e', '#9e3d2a', '#b5643a', '#7b2d26', '#5c2a1f']; let b = '';
+      cols.forEach((c, i) => { const base = 360 + i * 72; let d = `M0,900 L0,${base}`; for (let x = 0; x <= 1600; x += 40) { const y = base + Math.sin(x / 170 + i * 1.7) * 22 + Math.sin(x / 53 + i) * 8 - (i < 3 ? Math.max(0, 120 - Math.abs(x - (400 + i * 350)) / 3) : 0); d += ` L${x},${y.toFixed(0)}`; } b += `<path d='${d} L1600,900Z' fill='${c}'/>`; });
+      return wrap(lg('g', ['#7fb8f0', '#cfe6f7', '#fbd9a8']), `${full('url(#g)')}<circle cx='1250' cy='190' r='70' fill='#fff3c8'/>${b}`);
+    },
+    diner() {
+      const chk = `<pattern id='c' width='80' height='80' patternUnits='userSpaceOnUse'><rect width='80' height='80' fill='#f4f1ea'/><rect width='40' height='40' fill='#1d1d24'/><rect x='40' y='40' width='40' height='40' fill='#1d1d24'/></pattern>`;
+      const r = rng(5); let sp = '';
+      for (let i = 0; i < 24; i++) { const x = r() * 1600, y = 40 + r() * 440, s = .5 + r(); sp += `<path transform='translate(${x | 0},${y | 0}) scale(${s.toFixed(2)})' d='M0,-24 Q4,-4 24,0 Q4,4 0,24 Q-4,4 -24,0 Q-4,-4 0,-24Z' fill='${['#ff6b81', '#ffd166', '#ffffff', '#5bc0eb'][i % 4]}' opacity='.9'/>`; }
+      return wrap(chk + lg('m', ['#a8eadf', '#7fd6c8']) + lg('ch', ['#ffffff', '#9aa3ad', '#e8ecef']), `<rect width='1600' height='560' fill='url(#m)'/>${sp}<rect y='560' width='1600' height='26' fill='url(#ch)'/><rect y='586' width='1600' height='54' fill='#e63946'/><rect y='640' width='1600' height='10' fill='url(#ch)'/><rect y='650' width='1600' height='250' fill='url(#c)'/>`);
+    },
+    halloween() {
+      const r = rng(31), BAT = 'M0,0 C-8,-10 -22,-12 -34,-6 C-28,-4 -26,2 -26,6 C-32,2 -40,2 -46,6 C-34,8 -24,14 -20,22 C-16,14 -8,10 0,12 C8,10 16,14 20,22 C24,14 34,8 46,6 C40,2 32,2 26,6 C26,2 28,-4 34,-6 C22,-12 8,-10 0,0Z';
+      let bats = '', st = '';
+      for (let i = 0; i < 60; i++) st += `<circle cx='${(r() * 1600) | 0}' cy='${(r() * 600) | 0}' r='${(r() * 1.6 + .4).toFixed(1)}' fill='#fff' opacity='${(r() * .6 + .2).toFixed(2)}'/>`;
+      for (let i = 0; i < 9; i++) bats += `<path transform='translate(${(200 + r() * 1200) | 0},${(80 + r() * 300) | 0}) scale(${(.8 + r() * 1.3).toFixed(2)}) rotate(${(r() * 30 - 15) | 0})' d='${BAT}' fill='#140a22'/>`;
+      const pk = (x, y, s) => `<g transform='translate(${x},${y}) scale(${s})'><rect x='-6' y='-80' width='12' height='26' rx='4' fill='#3f6212'/><ellipse cx='-34' cy='-30' rx='36' ry='46' fill='#e8590c'/><ellipse cx='34' cy='-30' rx='36' ry='46' fill='#e8590c'/><ellipse cx='0' cy='-30' rx='40' ry='50' fill='#fd7e14'/><polygon points='-30,-42 -12,-42 -21,-58' fill='#ffd43b'/><polygon points='12,-42 30,-42 21,-58' fill='#ffd43b'/><path d='M-34,-18 Q0,12 34,-18 L22,-14 L14,-6 L4,-14 L-4,-6 L-14,-14 L-22,-6Z' fill='#ffd43b'/></g>`;
+      return wrap(lg('g', ['#12062a', '#3b1466', '#6d2c8f']) + `<radialGradient id='mg'><stop offset='0' stop-color='#fff3c4' stop-opacity='.75'/><stop offset='1' stop-color='#fff3c4' stop-opacity='0'/></radialGradient>`,
+        `${full('url(#g)')}${st}<circle cx='1250' cy='210' r='270' fill='url(#mg)'/><circle cx='1250' cy='210' r='120' fill='#fff1b8'/>${bats}<path d='M0,900 L0,760 Q400,690 800,770 Q1200,700 1600,750 L1600,900Z' fill='#0e0718'/>
+        <path d='M150,800 L168,560 M166,600 L110,500 M166,620 L240,500 L290,486 M120,520 L80,470 M230,512 L236,450' stroke='#0e0718' stroke-width='18' stroke-linecap='round' fill='none'/><path d='M140,800 L176,800 L168,600Z' fill='#0e0718'/>${pk(430, 840, 1)}${pk(570, 860, .7)}${pk(1100, 830, 1.2)}${pk(1300, 868, .8)}`);
+    },
+    autumn() {
+      const r = rng(9), cols = ['#d9480f', '#f08c00', '#c92a2a', '#e8590c', '#fab005', '#a61e4d']; let l = '';
+      for (let i = 0; i < 46; i++) l += `<path d='${LEAF}' transform='translate(${(r() * 1600) | 0},${(r() * 900) | 0}) rotate(${(r() * 360) | 0}) scale(${(.6 + r() * 1.3).toFixed(2)})' fill='${cols[i % cols.length]}' opacity='${(.55 + r() * .4).toFixed(2)}'/>`;
+      return wrap(lg('g', ['#fff1d6', '#f9c98a', '#f29e5c'], 1, 1), `${full('url(#g)')}${l}`);
+    },
+    christmas() {
+      const r = rng(21); let snow = '';
+      for (let i = 0; i < 160; i++) snow += `<circle cx='${(r() * 1600) | 0}' cy='${(r() * 900) | 0}' r='${(1 + r() * 4).toFixed(1)}' fill='#fff' opacity='${(.45 + r() * .55).toFixed(2)}'/>`;
+      const tree = (x, y, s) => `<g transform='translate(${x},${y}) scale(${s})'><rect x='-10' y='-10' width='20' height='30' fill='#3b2a1a'/><polygon points='0,-200 -60,-110 60,-110' fill='#0b4d33'/><polygon points='0,-150 -80,-50 80,-50' fill='#0b4d33'/><polygon points='0,-100 -100,0 100,0' fill='#0b4d33'/><path d='M-60,-110 L-40,-120 L-20,-110 L0,-122 L20,-110 L40,-120 L60,-110Z' fill='#fff' opacity='.85'/></g>`;
+      return wrap(lg('g', ['#0a2e3c', '#124e5c', '#2b6f6a']), `${full('url(#g)')}${star(1400, 120, 34, '#ffe066')}${snow}${tree(180, 790, 1.3)}${tree(330, 800, .9)}${tree(1300, 800, 1.1)}${tree(1460, 790, 1.4)}<path d='M0,900 L0,790 Q400,730 800,790 Q1200,740 1600,780 L1600,900Z' fill='#f1f5f9'/>`);
+    },
+    chalkboard() {
+      const ff = 'Chalkboard SE, Comic Sans MS, Segoe Print, cursive';
+      const t = (x, y, s, txt, rot = 0, o = .5) => `<text x='${x}' y='${y}' font-size='${s}' font-family='${ff}' fill='#fff' opacity='${o}' transform='rotate(${rot} ${x} ${y})'>${txt}</text>`;
+      return wrap(`<radialGradient id='g' cx='.5' cy='.45' r='.8'><stop offset='0' stop-color='#3f6e52'/><stop offset='1' stop-color='#1f3a2b'/></radialGradient>`,
+        `${full('url(#g)')}${t(110, 190, 96, 'Hello!', -6, .55)}${t(1080, 150, 60, 'How are you?', 4, .4)}${t(160, 780, 54, 'I can speak English!', -3, .4)}${t(1150, 760, 80, 'A B C', 5, .35)}${t(720, 470, 40, 'Monday · Tuesday · Wednesday', 0, .22)}${t(640, 160, 46, '1 2 3', 0, .3)}
+        <circle cx='1420' cy='440' r='60' fill='none' stroke='#fff' stroke-width='5' opacity='.35'/><circle cx='1400' cy='425' r='6' fill='#fff' opacity='.35'/><circle cx='1440' cy='425' r='6' fill='#fff' opacity='.35'/><path d='M1390,460 Q1420,485 1450,460' stroke='#fff' stroke-width='5' fill='none' opacity='.35'/>
+        <path d='M300,420 Q420,360 520,430' stroke='#fff' stroke-width='5' fill='none' opacity='.3'/><path d='M505,410 L522,432 L496,438' stroke='#fff' stroke-width='5' fill='none' opacity='.3'/>
+        <rect x='0' y='0' width='1600' height='900' fill='none' stroke='#8b5a2b' stroke-width='40'/><rect x='300' y='862' width='1000' height='18' rx='6' fill='#6f4520'/><rect x='420' y='852' width='60' height='12' rx='5' fill='#f8f8f2'/><rect x='520' y='854' width='40' height='10' rx='5' fill='#ffd6e0'/>`);
+    },
+    notebook() {
+      const p = `<pattern id='l' width='1600' height='44' patternUnits='userSpaceOnUse'><line x1='0' y1='43' x2='1600' y2='43' stroke='#9cc3e6' stroke-width='2'/></pattern>`; let holes = '';
+      for (let y = 90; y < 900; y += 150) holes += `<circle cx='50' cy='${y}' r='16' fill='#d8d4c8'/>`;
+      return wrap(p, `${full('#fffdf4')}<rect y='100' width='1600' height='800' fill='url(#l)'/><line x1='130' y1='0' x2='130' y2='900' stroke='#ef8a8a' stroke-width='3'/><line x1='136' y1='0' x2='136' y2='900' stroke='#ef8a8a' stroke-width='1.5'/>${holes}`);
+    },
+  };
+  const PLAIN = { ocean: 'linear-gradient(135deg,#2193b0,#6dd5ed)', sunset: 'linear-gradient(135deg,#ff9a8b,#ff6a88 55%,#ff99ac)', mint: 'linear-gradient(135deg,#d4fc79,#96e6a1)', lavender: 'linear-gradient(135deg,#a18cd1,#fbc2eb)', light: '#eef1f6', dark: '#1e2230' };
+  const list = [['london', 'London at dusk'], ['nyc', 'New York by night'], ['route66', 'Route 66'], ['goldengate', 'Golden Gate'], ['usflag', 'Stars & Stripes'], ['unionjack', 'Union Jack'], ['phonebox', 'Phone box & bus'], ['tartan', 'Scottish tartan'], ['ireland', 'Ireland'], ['canada', 'Canada'], ['outback', 'Australian outback'], ['canyon', 'Grand Canyon'], ['diner', 'American diner'], ['halloween', 'Halloween'], ['autumn', 'Thanksgiving leaves'], ['christmas', 'Christmas'], ['chalkboard', 'Chalkboard'], ['notebook', 'Notebook'], ['ocean', 'Ocean'], ['sunset', 'Sunset'], ['mint', 'Mint'], ['lavender', 'Lavender'], ['light', 'Light grey'], ['dark', 'Night']];
+  const cache = {};
+  const css = id => { if (cache[id]) return cache[id]; let v; if (PLAIN[id]) v = PLAIN[id]; else if (gen[id]) v = url(gen[id]()); else v = url(gen.london()); return (cache[id] = v); };
+  return { list, css };
+})();
+function wallBgCss(w) {
+  const dim = (+w.bgDim || 0) / 100;
+  const base = w.bg === 'custom' && w.bgImage ? `url("${w.bgImage}") center/cover no-repeat` : BG.css(w.bg || 'london');
+  return dim ? `linear-gradient(rgba(10,12,25,${dim}),rgba(10,12,25,${dim})), ${base}` : base;
+}
+
+/* ---------------- constantes ---------------- */
+const COLORS = { white: '#ffffff', yellow: '#fff6bf', pink: '#ffe1ea', blue: '#dcecff', green: '#d9f7e1', purple: '#ebe1ff', orange: '#ffe5c7', dark: '#1f2433' };
+const HL = { red: '#e11d48', yellow: '#f59e0b', blue: '#2563eb', green: '#16a34a', purple: '#7c3aed' };
+const TYPES = {
+  text: { icon: '📝', label: 'Texte' }, highlight: { icon: '🟥', label: 'Encadré', teacher: true },
+  image: { icon: '🖼️', label: 'Image' }, audio: { icon: '🎙️', label: 'Audio' }, link: { icon: '🔗', label: 'Lien' }, youtube: { icon: '▶️', label: 'Vidéo' },
+  clock: { icon: '🕐', label: 'Horloge', teacher: true, widget: true }, timer: { icon: '⏳', label: 'Minuteur', teacher: true, widget: true },
+  stopwatch: { icon: '⏱️', label: 'Chrono', teacher: true, widget: true }, quizlet: { icon: '🃏', label: 'Quizlet', teacher: true, widget: true },
+  embed: { icon: '🎮', label: 'Jeu / intégration', teacher: true, widget: true },
+};
+const FORMATS = [
+  { id: 'columns', icon: '▥', label: 'Colonnes', desc: 'Des sections côte à côte' },
+  { id: 'wall', icon: '🧱', label: 'Mur', desc: 'Cartes empilées en briques' },
+  { id: 'grid', icon: '▦', label: 'Grille', desc: 'Rangées régulières' },
+  { id: 'free', icon: '✥', label: 'Toile libre', desc: 'Placez les cartes où vous voulez' },
+];
+const MODES = { open: ['🟢', 'Ouvert', 'Les élèves publient librement'], review: ['🟡', 'Validation', 'Les publications attendent votre accord'], closed: ['🔒', 'Fermé', 'Les élèves ne peuvent plus publier'] };
+const GOOGLE_G = `<svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>`;
+
+/* ---------------- stockage Firebase ---------------- */
+async function makeFirebaseStore() {
+  const base = `https://www.gstatic.com/firebasejs/${FB_VERSION}`;
+  const [A, Au, F] = await Promise.all([import(`${base}/firebase-app.js`), import(`${base}/firebase-auth.js`), import(`${base}/firebase-firestore.js`)]);
+  const app = A.initializeApp(firebaseConfig);
+  const auth = Au.getAuth(app);
+  const db = F.getFirestore(app);
+  const { doc, collection, query, where, onSnapshot, setDoc, updateDoc, deleteDoc, addDoc, getDoc, getDocs, writeBatch, deleteField, increment } = F;
+  const wallRef = id => doc(db, 'walls', id), postsCol = w => collection(db, 'walls', w, 'posts'), postRef = (w, p) => doc(db, 'walls', w, 'posts', p), cmCol = (w, p) => collection(db, 'walls', w, 'posts', p, 'comments');
+  const mapU = u => u ? { uid: u.uid, anonymous: u.isAnonymous, name: u.displayName || '', email: u.email || '', photo: u.photoURL || '' } : null;
+  const onErr = e => { console.error(e); toast(errMsg(e), 'err'); };
+  const docs = s => s.docs.map(d => ({ id: d.id, ...d.data() }));
+  async function chunked(items, fn) { for (let i = 0; i < items.length; i += 400) { const b = writeBatch(db); items.slice(i, i + 400).forEach(it => fn(b, it)); await b.commit(); } }
+  return {
+    kind: 'firebase',
+    onAuth: cb => Au.onAuthStateChanged(auth, u => cb(mapU(u))),
+    signInGoogle: () => Au.signInWithPopup(auth, new Au.GoogleAuthProvider()),
+    async signInStudent() { if (!auth.currentUser) await Au.signInAnonymously(auth); return mapU(auth.currentUser); },
+    signOut: () => Au.signOut(auth),
+    watchMyWalls: (uid, cb) => onSnapshot(query(collection(db, 'walls'), where('ownerUid', '==', uid)), s => cb(docs(s)), onErr),
+    wallExists: async id => (await getDoc(wallRef(id))).exists(),
+    createWall: (id, data) => setDoc(wallRef(id), data),
+    updateWall: (id, patch) => updateDoc(wallRef(id), patch),
+    async deleteWall(id) { const ps = await getDocs(postsCol(id)); await chunked(ps.docs.map(d => d.ref), (b, ref) => b.delete(ref)); await deleteDoc(wallRef(id)); },
+    watchWall: (id, cb, err) => onSnapshot(wallRef(id), s => cb(s.exists() ? { id: s.id, ...s.data() } : null), err || onErr),
+    watchPosts(w, { owner, uid }, cb) {
+      if (owner) return onSnapshot(postsCol(w), s => cb(docs(s)), onErr);
+      const a = new Map(), b = new Map();
+      const out = () => cb([...new Map([...a, ...b]).values()]);
+      const set = m => s => { m.clear(); s.forEach(d => m.set(d.id, { id: d.id, ...d.data() })); out(); };
+      const u1 = onSnapshot(query(postsCol(w), where('status', '==', 'approved'), where('hidden', '==', false)), set(a), onErr);
+      const u2 = onSnapshot(query(postsCol(w), where('authorUid', '==', uid)), set(b), onErr);
+      return () => { u1(); u2(); };
+    },
+    addPost: async (w, data) => (await addDoc(postsCol(w), data)).id,
+    updatePost: (w, p, patch) => updateDoc(postRef(w, p), patch),
+    deletePost: (w, p) => deleteDoc(postRef(w, p)),
+    batchUpdate: (w, ids, patch) => chunked(ids, (b, id) => b.update(postRef(w, id), patch)),
+    batchDelete: (w, ids) => chunked(ids, (b, id) => b.delete(postRef(w, id))),
+    toggleLike: (w, p, uid, on) => updateDoc(postRef(w, p), { [`likes.${uid}`]: on ? true : deleteField() }),
+    watchComments: (w, p, cb) => onSnapshot(cmCol(w, p), s => cb(docs(s)), onErr),
+    async addComment(w, p, data) { await addDoc(cmCol(w, p), data); await updateDoc(postRef(w, p), { cc: increment(1) }).catch(() => {}); },
+    async deleteComment(w, p, c) { await deleteDoc(doc(db, 'walls', w, 'posts', p, 'comments', c)); await updateDoc(postRef(w, p), { cc: increment(-1) }).catch(() => {}); },
+    async getTeacher(uid) { const s = await getDoc(doc(db, 'teachers', uid)); return s.exists() ? s.data() : { games: [] }; },
+    saveTeacher: (uid, data) => setDoc(doc(db, 'teachers', uid), data, { merge: true }),
+  };
+}
+
+/* ---------------- stockage démo (local, sans connexion) ---------------- */
+function makeDemoStore() {
+  const KEY = 'ew-demo-v1';
+  let db; try { db = JSON.parse(localStorage.getItem(KEY)); } catch { }
+  if (!db || !db.walls) { db = { walls: {}, posts: {}, comments: {}, teachers: {} }; seedDemo(db); }
+  const subs = new Set();
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch { } };
+  const emit = () => { save(); setTimeout(() => subs.forEach(f => f()), 0); };
+  const sub = fn => { subs.add(fn); setTimeout(fn, 0); return () => subs.delete(fn); };
+  const user = { uid: 'demo-prof', anonymous: false, name: 'Mr G (démo)', email: '', photo: '' };
+  return {
+    kind: 'demo',
+    onAuth: cb => { setTimeout(() => cb(user), 0); return () => { }; },
+    signInGoogle: async () => { }, signInStudent: async () => user, signOut: async () => { localStorage.removeItem(KEY); location.href = location.pathname; },
+    watchMyWalls: (uid, cb) => sub(() => cb(Object.values(db.walls).filter(w => w.ownerUid === uid).map(clone))),
+    wallExists: async id => !!db.walls[id],
+    createWall: async (id, data) => { db.walls[id] = { id, ...clone(data) }; emit(); },
+    updateWall: async (id, patch) => { Object.entries(clone(patch)).forEach(([k, v]) => setPath(db.walls[id], k, v)); emit(); },
+    deleteWall: async id => { delete db.walls[id]; Object.keys(db.posts).forEach(k => { if (db.posts[k].wallId === id) delete db.posts[k]; }); emit(); },
+    watchWall: (id, cb) => sub(() => cb(db.walls[id] ? clone(db.walls[id]) : null)),
+    watchPosts: (w, o, cb) => sub(() => cb(Object.values(db.posts).filter(p => p.wallId === w).map(clone))),
+    addPost: async (w, data) => { const id = 'p' + genId(); db.posts[id] = { id, wallId: w, ...clone(data) }; emit(); return id; },
+    updatePost: async (w, p, patch) => { if (!db.posts[p]) return; Object.entries(clone(patch)).forEach(([k, v]) => setPath(db.posts[p], k, v)); emit(); },
+    deletePost: async (w, p) => { delete db.posts[p]; emit(); },
+    batchUpdate: async (w, ids, patch) => { ids.forEach(id => db.posts[id] && Object.assign(db.posts[id], clone(patch))); emit(); },
+    batchDelete: async (w, ids) => { ids.forEach(id => delete db.posts[id]); emit(); },
+    toggleLike: async (w, p, uid, on) => { const x = db.posts[p]; if (!x) return; x.likes = x.likes || {}; if (on) x.likes[uid] = true; else delete x.likes[uid]; emit(); },
+    watchComments: (w, p, cb) => sub(() => cb(Object.values(db.comments).filter(c => c.postId === p).map(clone))),
+    addComment: async (w, p, data) => { const id = 'c' + genId(); db.comments[id] = { id, postId: p, ...clone(data) }; if (db.posts[p]) db.posts[p].cc = (db.posts[p].cc || 0) + 1; emit(); },
+    deleteComment: async (w, p, c) => { delete db.comments[c]; if (db.posts[p]) db.posts[p].cc = Math.max(0, (db.posts[p].cc || 1) - 1); emit(); },
+    getTeacher: async uid => clone(db.teachers[uid] || { games: [] }),
+    saveTeacher: async (uid, data) => { db.teachers[uid] = { ...(db.teachers[uid] || {}), ...clone(data) }; emit(); },
+  };
+}
+function seedDemo(db) {
+  const id = 'DEMO5E', now = Date.now();
+  db.walls[id] = { id, title: '5e — Can / Can’t', subtitle: 'Unit 3 · Abilities', ownerUid: 'demo-prof', ownerName: 'Mr G', format: 'columns', bg: 'london', bgDim: 0, sections: [{ id: 's1', title: '📌 Today' }, { id: 's2', title: '📚 Vocabulary' }, { id: 's3', title: '✍️ Your turn!' }], studentMode: 'review', allowComments: true, allowLikes: true, showAuthors: true, createdAt: now, updatedAt: now };
+  const P = (o, i) => { const pid = 'seed' + i; db.posts[pid] = { id: pid, wallId: id, authorUid: 'demo-prof', authorName: 'Mr G', status: 'approved', hidden: false, likes: {}, cc: 0, createdAt: now - (20 - i) * 60000, order: i * 1000, color: 'white', size: 'M', fs: 1, ...o }; };
+  P({ type: 'highlight', sectionId: 's1', title: 'Homework', body: 'Learn the words of the Vocabulary column for Monday!', hl: 'red', icon: '⚠️' }, 1);
+  P({ type: 'clock', sectionId: 's1', title: 'What time is it?', widget: { h12: true, showDate: true } }, 2);
+  P({ type: 'timer', sectionId: 's1', title: 'Work in pairs', widget: { duration: 300000, remaining: 300000, running: false, endsAt: 0 } }, 3);
+  P({ type: 'text', sectionId: 's2', title: 'I can / I can’t', body: 'I can swim. 🏊\nI can’t fly. 🕊️\nCan you ride a bike?', color: 'yellow', fs: 1.3 }, 4);
+  P({ type: 'link', sectionId: 's2', title: 'Wordwall — can / can’t', url: 'https://wordwall.net/resource/37114193', body: 'Maze chase game' }, 5);
+  P({ type: 'text', sectionId: 's2', title: 'Secret answer', body: 'Yes, I can! 🎉', color: 'green', hidden: true }, 6);
+  P({ type: 'text', sectionId: 's3', body: 'I can play the guitar but I can’t sing!', authorUid: 'demo-lea', authorName: 'Léa', color: 'pink', likes: { 'demo-tom': true, 'demo-sam': true } }, 7);
+  P({ type: 'text', sectionId: 's3', body: 'My dog can run very fast. 🐕', authorUid: 'demo-tom', authorName: 'Tom', color: 'blue' }, 8);
+  P({ type: 'text', sectionId: 's3', body: 'I can speak three languages.', authorUid: 'demo-sam', authorName: 'Sam', status: 'pending', color: 'purple' }, 9);
+}
+
+/* ---------------- état ---------------- */
+const S = {
+  store: null, user: null, demo: false, wallId: null, wall: null, posts: [], postsLoaded: false, isOwner: false, preview: false,
+  teacher: { games: [] }, els: new Map(), lists: {}, ckey: null, unsubs: [], trayEl: null, dragging: null,
+  scale: +(localStorage.getItem('ew-scale') || 1), mobile: matchMedia('(max-width: 700px)').matches,
+};
+const teacherMode = () => S.isOwner && !S.preview;
+const isAuthor = p => !!S.user && p.authorUid === S.user.uid;
+const canPost = () => S.isOwner || (S.wall && S.wall.studentMode !== 'closed');
+const getName = () => (S.user && !S.user.anonymous) ? (S.user.name || 'Teacher') : (localStorage.getItem('ew-name') || '');
+const effFormat = () => { const f = S.wall?.format || 'columns'; return (f === 'free' && S.mobile) ? 'stack' : f; };
+function href(q = '') { const p = new URLSearchParams(q); if (S.demo) p.set('demo', '1'); const s = p.toString(); return location.pathname + (s ? '?' + s : ''); }
+function go(q) { history.pushState({}, '', href(q)); route(); }
+function cleanup() {
+  S.unsubs.forEach(u => { try { u && u(); } catch { } }); S.unsubs = [];
+  S.wall = null; S.posts = []; S.postsLoaded = false; S.isOwner = false; S.preview = false; S.els = new Map(); S.lists = {}; S.ckey = null;
+  if (S.trayEl) { S.trayEl.remove(); S.trayEl = null; }
+  $$('.modal-back,.lightbox').forEach(m => m.remove());
+}
+
+/* ---------------- fenêtres ---------------- */
+function modal({ title, body, actions = [], wide = false, onClose }) {
+  const back = document.createElement('div'); back.className = 'modal-back';
+  back.innerHTML = `<div class="modal ${wide ? 'wide' : ''}" role="dialog" aria-modal="true"><div class="modal-head"><h2>${esc(title)}</h2><button class="x" aria-label="Fermer">✕</button></div><div class="modal-body"></div><div class="modal-actions"></div></div>`;
+  const bodyEl = $('.modal-body', back);
+  if (typeof body === 'string') bodyEl.innerHTML = body; else if (body) bodyEl.appendChild(body);
+  const act = $('.modal-actions', back);
+  let closed = false;
+  const onKey = e => { if (e.key === 'Escape') close(); };
+  const close = () => { if (closed) return; closed = true; back.remove(); document.removeEventListener('keydown', onKey); onClose && onClose(); };
+  document.addEventListener('keydown', onKey);
+  actions.forEach(a => {
+    const b = document.createElement('button'); b.className = 'btn ' + (a.cls || ''); b.textContent = a.label;
+    b.onclick = async () => {
+      if (a.onClick) { b.disabled = true; let r; try { r = await a.onClick(bodyEl, close); } catch (e) { if (e instanceof Fail) toast(e.message, 'err'); else { console.error(e); toast(errMsg(e), 'err'); } r = false; } b.disabled = false; if (r === false) return; }
+      close();
+    };
+    act.appendChild(b);
+  });
+  if (!actions.length) act.remove();
+  $('.x', back).onclick = close;
+  back.addEventListener('mousedown', e => { if (e.target === back) close(); });
+  document.body.appendChild(back);
+  return { el: bodyEl, close, root: back };
+}
+function confirmBox(msg, okLabel = 'Confirmer', danger = true) {
+  return new Promise(res => { modal({ title: 'Confirmation', body: `<p>${esc(msg)}</p>`, actions: [{ label: 'Annuler', onClick: () => res(false) }, { label: okLabel, cls: danger ? 'danger' : 'primary', onClick: () => res(true) }], onClose: () => res(false) }); });
+}
+function promptBox(title, label, value = '', okLabel = 'OK') {
+  return new Promise(res => {
+    const m = modal({ title, body: `<label class="f">${esc(label)}</label><input id="pb" maxlength="80" value="${esc(value)}">`, actions: [{ label: 'Annuler', onClick: () => res(null) }, { label: okLabel, cls: 'primary', onClick: el => { const v = $('#pb', el).value.trim(); if (!v) return false; res(v); } }], onClose: () => res(null) });
+    const i = $('#pb', m.el); i.focus(); i.select(); i.onkeydown = e => { if (e.key === 'Enter') $('.modal-actions .primary', m.root).click(); };
+  });
+}
+function lightbox(src) { const d = document.createElement('div'); d.className = 'lightbox'; d.innerHTML = `<img src="${src}" alt="">`; d.onclick = () => d.remove(); document.body.appendChild(d); }
+
+/* ---------------- médias ---------------- */
+function loadImg(src) { return new Promise((ok, ko) => { const i = new Image(); i.onload = () => ok(i); i.onerror = ko; i.src = src; }); }
+async function compressImage(file, maxDim = 1400, maxBytes = 600000) {
+  const u = URL.createObjectURL(file); const img = await loadImg(u); URL.revokeObjectURL(u);
+  let dim = maxDim, q = .82, data = '';
+  for (let i = 0; i < 8; i++) {
+    const s = Math.min(1, dim / Math.max(img.naturalWidth, img.naturalHeight));
+    const c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * s); c.height = Math.round(img.naturalHeight * s);
+    const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height);
+    data = c.toDataURL('image/jpeg', q);
+    if (data.length * .75 < maxBytes) return data;
+    q = Math.max(.45, q - .08); dim *= .85;
+  }
+  return data;
+}
+const blobToData = b => new Promise((ok, ko) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = ko; r.readAsDataURL(b); });
+let AC;
+function beep() {
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    [0, .35, .7].forEach(t => { const o = AC.createOscillator(), g = AC.createGain(); o.type = 'square'; o.frequency.value = 880; const s = AC.currentTime + t; g.gain.setValueAtTime(.0001, s); g.gain.exponentialRampToValueAtTime(.22, s + .02); g.gain.exponentialRampToValueAtTime(.0001, s + .28); o.connect(g).connect(AC.destination); o.start(s); o.stop(s + .3); });
+  } catch { }
+}
+
+/* ---------------- temps ---------------- */
+function englishDate(d) { const n = d.getDate(), m100 = n % 100; const suf = (m100 >= 11 && m100 <= 13) ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' }[n % 10] || 'th'); return `${d.toLocaleDateString('en-US', { weekday: 'long' })}, ${d.toLocaleDateString('en-US', { month: 'long' })} ${n}${suf}, ${d.getFullYear()}`; }
+function clockText(d, h12) { let h = d.getHours(); const m = String(d.getMinutes()).padStart(2, '0'); if (h12) { const ap = h >= 12 ? 'pm' : 'am'; h = h % 12 || 12; return `${h}:${m}<small> ${ap}</small>`; } return `${String(h).padStart(2, '0')}:${m}`; }
+function fmtTimer(ms) { const s = Math.ceil(ms / 1000), m = Math.floor(s / 60), r = s % 60; return `${m}:${String(r).padStart(2, '0')}`; }
+function fmtStop(ms) { const t = Math.floor(ms / 100), ds = t % 10, s = Math.floor(t / 10), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), r = s % 60; return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(r).padStart(2, '0') + '<small>.' + ds + '</small>'; }
+function applyLocal(p, patch) { Object.entries(patch).forEach(([k, v]) => setPath(p, k, v)); }
+
+/* ---------------- routeur ---------------- */
+function route() {
+  cleanup();
+  const p = new URLSearchParams(location.search);
+  const w = (p.get('w') || '').toUpperCase().trim();
+  if (w) { S.wallId = w; if (!S.user || (S.user.anonymous && !getName())) return viewJoin(w); return viewBoard(); }
+  S.wallId = null;
+  if (S.user && !S.user.anonymous) return viewDash();
+  return viewHome();
+}
+
+/* ---------------- accueil ---------------- */
+function viewHome() {
+  document.title = 'English Walls';
+  $('#app').innerHTML = `<div class="home" id="home"><div class="home-card">
+    <div class="brand big">🧱 English Walls</div><p class="tag">Des murs collaboratifs pour la classe d'anglais.</p>
+    <form id="join"><label class="f">Élève : entre le code du mur</label><div class="copy-row"><input id="code" maxlength="8" placeholder="EX : K7RM2P" autocomplete="off" autocapitalize="characters" spellcheck="false"><button class="btn primary">Entrer</button></div></form>
+    <div class="or"><span>Enseignant</span></div>
+    <button class="btn google wide" id="g">${GOOGLE_G} Se connecter avec Google</button>
+    <p class="small muted center" style="margin-top:14px"><a href="?demo=1">Essayer la démo sans connexion</a></p>
+  </div></div>`;
+  $('#home').style.background = BG.css('nyc');
+  $('#join').onsubmit = e => { e.preventDefault(); const c = $('#code').value.toUpperCase().replace(/[^A-Z0-9]/g, ''); if (c.length < 4) return toast('Code trop court.', 'err'); go('w=' + c); };
+  $('#g').onclick = () => guard(() => S.store.signInGoogle());
+}
+function viewJoin(code) {
+  $('#app').innerHTML = `<div class="home" id="home"><div class="home-card">
+    <div class="brand big">🧱 English Walls</div><h2>Mur ${esc(code)}</h2>
+    <form id="nm"><label class="f">Ton prénom</label><input id="name" maxlength="30" value="${esc(localStorage.getItem('ew-name') || '')}" placeholder="Ex : Léa" autocomplete="off"><button class="btn primary wide">Entrer sur le mur →</button></form>
+    <div class="or"><span>ou</span></div>
+    <button class="btn google wide" id="g">${GOOGLE_G} Je suis l'enseignant</button>
+    <p class="center small" style="margin-top:14px"><a href="${href()}" id="home-link">← Accueil</a></p>
+  </div></div>`;
+  $('#home').style.background = BG.css('london');
+  $('#name').focus();
+  $('#home-link').onclick = e => { e.preventDefault(); go(''); };
+  $('#nm').onsubmit = async e => {
+    e.preventDefault(); const n = $('#name').value.trim(); if (!n) return toast('Écris ton prénom 🙂', 'err');
+    localStorage.setItem('ew-name', n);
+    if (S.user) return route();
+    await guard(() => S.store.signInStudent());
+  };
+  $('#g').onclick = () => guard(() => S.store.signInGoogle());
+}
+function viewFatal() {
+  $('#app').innerHTML = `<div class="home" id="home"><div class="home-card center"><div class="brand big">🧱 English Walls</div><p>Impossible de joindre Firebase. Vérifiez la connexion Internet, puis rechargez la page.</p><p><button class="btn primary" onclick="location.reload()">Recharger</button></p><p class="small"><a href="?demo=1">Ouvrir la démo hors ligne</a></p></div></div>`;
+  $('#home').style.background = BG.css('nyc');
+}
+
+/* ---------------- tableau de bord ---------------- */
+function viewDash() {
+  document.title = 'Mes murs · English Walls';
+  $('#app').innerHTML = `<div class="dash"><header class="dash-top"><div class="brand">🧱 English Walls ${S.demo ? '<span class="demo-tag">démo</span>' : ''}</div>
+    <div class="me">${S.user.photo ? `<img src="${esc(S.user.photo)}" alt="" referrerpolicy="no-referrer">` : ''}<span>${esc(S.user.name || S.user.email || '')}</span><button class="btn small" id="out">${S.demo ? 'Réinitialiser la démo' : 'Déconnexion'}</button></div></header>
+    <main class="dash-main"><div class="dash-head"><h1>Mes murs</h1><button class="btn primary" id="new">＋ Nouveau mur</button></div><div class="wall-grid" id="grid"><p class="muted">Chargement…</p></div></main></div>`;
+  $('#out').onclick = async () => { if (S.demo && !(await confirmBox('Effacer toutes les données de la démo ?', 'Réinitialiser'))) return; guard(() => S.store.signOut()); };
+  $('#new').onclick = openCreateWall;
+  S.unsubs.push(S.store.watchMyWalls(S.user.uid, walls => {
+    const g = $('#grid'); if (!g) return;
+    walls.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+    if (!walls.length) { g.innerHTML = `<div class="empty-dash"><div style="font-size:3rem">🧱</div><h2>Aucun mur pour l'instant</h2><p class="muted">Créez votre premier mur pour la classe.</p><button class="btn primary" id="new2">＋ Créer un mur</button></div>`; $('#new2').onclick = openCreateWall; return; }
+    g.innerHTML = walls.map(w => `<div class="wtile" data-id="${esc(w.id)}"><div class="wt-bg"></div><div class="wt-info"><b>${esc(w.title || 'Sans titre')}</b><small>${esc(w.subtitle || '')}</small><div class="wt-meta"><span class="code">${esc(w.id)}</span><span class="mdot m-${esc(w.studentMode)}" title="${esc(MODES[w.studentMode]?.[2] || '')}"></span></div></div></div>`).join('');
+    $$('.wtile', g).forEach((t, i) => { $('.wt-bg', t).style.background = wallBgCss(walls[i]); t.onclick = () => go('w=' + t.dataset.id); });
+  }));
+}
+function formatsHTML(sel, name = 'fmt') { return `<div class="formats">${FORMATS.map(f => `<label class="fmt"><input type="radio" name="${name}" value="${f.id}" ${sel === f.id ? 'checked' : ''}><span><b>${f.icon} ${f.label}</b><small>${f.desc}</small></span></label>`).join('')}</div>`; }
+function galleryInto(container, sel, onPick) {
+  container.innerHTML = `<div class="bg-grid">${BG.list.map(([id, name]) => `<button type="button" class="bg-tile ${sel === id ? 'on' : ''}" data-bg="${id}"><span>${esc(name)}</span></button>`).join('')}</div>`;
+  $$('.bg-tile', container).forEach(t => { t.style.background = BG.css(t.dataset.bg); t.onclick = () => { $$('.bg-tile', container).forEach(x => x.classList.toggle('on', x === t)); onPick(t.dataset.bg); }; });
+}
+function openCreateWall() {
+  let bg = 'london';
+  const root = document.createElement('div');
+  root.innerHTML = `<label class="f">Titre du mur</label><input id="c-title" maxlength="80" placeholder="Ex : 5e — Unit 3"><label class="f">Sous-titre (facultatif)</label><input id="c-sub" maxlength="120" placeholder="Ex : Abilities · can / can't"><label class="f">Format</label>${formatsHTML('columns', 'cfmt')}<label class="f">Fond d'écran</label><div id="c-gal"></div>`;
+  galleryInto($('#c-gal', root), bg, v => bg = v);
+  modal({
+    title: '🧱 Nouveau mur', body: root, wide: true, actions: [{ label: 'Annuler' }, {
+      label: 'Créer le mur', cls: 'primary', onClick: async el => {
+        const title = $('#c-title', el).value.trim(); if (!title) fail('Donnez un titre au mur.');
+        const format = $('input[name=cfmt]:checked', el).value;
+        let code = ''; for (let i = 0; i < 6; i++) { const c = genCode(); if (!(await S.store.wallExists(c))) { code = c; break; } }
+        if (!code) fail('Impossible de générer un code, réessayez.');
+        const now = Date.now();
+        await S.store.createWall(code, { title, subtitle: $('#c-sub', el).value.trim(), ownerUid: S.user.uid, ownerName: S.user.name || '', format, bg, bgImage: null, bgDim: 0, sections: [{ id: 's1', title: '📌 Today' }, { id: 's2', title: '📚 Vocabulary' }, { id: 's3', title: '✍️ Your turn!' }], studentMode: 'closed', allowComments: true, allowLikes: true, showAuthors: true, createdAt: now, updatedAt: now });
+        setTimeout(() => go('w=' + code), 0);
+      }
+    }]
+  });
+  setTimeout(() => $('#c-title', root)?.focus(), 50);
+}
+
+/* ---------------- mur ---------------- */
+function viewBoard() {
+  $('#app').innerHTML = `<div class="board" id="board">
+    <header class="topbar">
+      <button class="tb-btn own-only" id="b-back" title="Mes murs">←</button>
+      <div class="titles"><h1 id="w-title">…</h1><div class="sub" id="w-sub"></div></div>
+      <div class="tb-group own-only"><span class="seg-lbl">Élèves</span><div class="seg" id="seg"></div></div>
+      <button class="tb-btn pending" id="b-pending" hidden title="Publications à valider">📥 <span id="pend-n">0</span></button>
+      <button class="tb-btn own-only" id="b-widgets" title="Ajouter un widget">🧩<span class="lbl"> Widgets</span></button>
+      <button class="tb-btn own-only" id="b-preview" title="Voir le mur comme un élève">👁<span class="lbl"> Vue élève</span></button>
+      <button class="tb-btn own-only" id="b-share" title="Partager avec la classe">🔗<span class="lbl"> Partager</span></button>
+      <button class="tb-btn own-only" id="b-settings" title="Réglages du mur">⚙️</button>
+      <div class="tb-group zoom"><button class="tb-btn" id="z-minus" title="Réduire le texte">A−</button><button class="tb-btn" id="z-plus" title="Agrandir le texte">A+</button></div>
+      <button class="tb-btn" id="b-full" title="Plein écran">⛶</button>
+      <button class="tb-btn" id="b-me" hidden></button>
+    </header>
+    <div class="status-strip" id="strip" hidden></div>
+    <main class="scroll" id="scroll"></main>
+    <button class="fab" id="fab" title="Publier" hidden>＋</button>
+  </div>`;
+  $('#b-back').onclick = () => go('');
+  $('#b-pending').onclick = toggleTray;
+  $('#b-widgets').onclick = () => openEditor(null, { type: 'clock', widgetsOnly: true });
+  $('#b-preview').onclick = () => { S.preview = !S.preview; S.ckey = null; updateChrome(); renderPosts(); };
+  $('#b-share').onclick = openShare;
+  $('#b-settings').onclick = openSettings;
+  $('#z-minus').onclick = () => setScale(S.scale - .1);
+  $('#z-plus').onclick = () => setScale(S.scale + .1);
+  $('#b-full').onclick = toggleFullscreen;
+  $('#b-me').onclick = async () => { const n = await promptBox('Ton prénom', 'Prénom affiché sur tes publications', getName(), 'Enregistrer'); if (n) { localStorage.setItem('ew-name', n); updateChrome(); } };
+  $('#fab').onclick = () => { if (!canPost()) return toast('Les publications sont fermées pour le moment.', 'err'); openEditor(null, {}); };
+  S.unsubs.push(S.store.watchWall(S.wallId, onWall, e => { console.error(e); viewNotFound(errMsg(e)); }));
+}
+function viewNotFound(msg) {
+  cleanup();
+  $('#app').innerHTML = `<div class="home" id="home"><div class="home-card center"><div class="brand big">🧱 English Walls</div><h2>Mur introuvable</h2><p class="muted">${esc(msg || `Aucun mur ne porte le code « ${S.wallId} ». Vérifie le code.`)}</p><button class="btn primary" id="hb">← Accueil</button></div></div>`;
+  $('#home').style.background = BG.css('london'); $('#hb').onclick = () => go('');
+}
+function onWall(w) {
+  if (!w) return viewNotFound();
+  const first = !S.wall;
+  S.wall = w;
+  S.isOwner = !!S.user && w.ownerUid === S.user.uid;
+  if (first) {
+    S.unsubs.push(S.store.watchPosts(S.wallId, { owner: S.isOwner, uid: S.user.uid }, list => { S.posts = list; S.postsLoaded = true; renderPosts(); renderTray(); }));
+    if (S.isOwner) S.store.getTeacher(S.user.uid).then(t => { S.teacher = { games: [], ...(t || {}) }; }).catch(() => { });
+  }
+  updateChrome(); renderPosts();
+}
+function updateChrome(forceBg) {
+  const w = S.wall; if (!w || !$('#board')) return;
+  $('#w-title').textContent = w.title || 'Sans titre';
+  $('#w-sub').textContent = w.subtitle || '';
+  document.title = (w.title || 'Mur') + ' · English Walls';
+  const b = $('#board'), bgc = wallBgCss(w);
+  if (forceBg || b._bg !== bgc) { b.style.background = bgc; b._bg = bgc; }
+  const own = S.isOwner;
+  $$('.own-only', b).forEach(x => x.hidden = !own);
+  if (own) {
+    $('#seg').innerHTML = Object.entries(MODES).map(([m, [i, l, d]]) => `<button data-mode="${m}" class="${w.studentMode === m ? 'on m-' + m : ''}" title="${esc(d)}">${i}<span class="lbl"> ${l}</span></button>`).join('');
+    $$('#seg button').forEach(bt => bt.onclick = () => { const m = bt.dataset.mode; if (m === S.wall.studentMode) return; S.wall.studentMode = m; updateChrome(); guard(async () => { await S.store.updateWall(S.wallId, { studentMode: m, updatedAt: Date.now() }); toast(`Publications élèves : ${MODES[m][1].toLowerCase()}`, 'ok'); }); });
+  }
+  $('#b-preview').classList.toggle('on', S.preview);
+  const strip = $('#strip');
+  if (own && S.preview) { strip.hidden = false; strip.className = 'status-strip preview'; strip.innerHTML = `👁 Aperçu : vous voyez le mur comme vos élèves <button class="btn small" id="exit-prev">Quitter l'aperçu</button>`; $('#exit-prev').onclick = () => $('#b-preview').click(); }
+  else if (!own) { strip.hidden = false; strip.className = 'status-strip'; strip.textContent = w.studentMode === 'open' ? '🟢 Tu peux publier sur ce mur' : w.studentMode === 'review' ? '🟡 Tu peux publier : le professeur valide avant affichage' : '🔒 Les publications sont fermées pour le moment'; }
+  else strip.hidden = true;
+  $('#fab').hidden = !canPost();
+  const me = $('#b-me'); me.hidden = own; if (!own) me.innerHTML = `👤<span class="lbl"> ${esc(getName())}</span>`;
+  updatePending();
+}
+function updatePending() {
+  const btn = $('#b-pending'); if (!btn || !S.wall) return;
+  const n = S.posts.filter(p => p.status === 'pending').length;
+  $('#pend-n').textContent = n;
+  btn.hidden = !S.isOwner || (n === 0 && S.wall.studentMode !== 'review');
+  btn.classList.toggle('pending', n > 0);
+}
+function setScale(v) { S.scale = Math.round(Math.min(2.2, Math.max(.7, v)) * 10) / 10; document.documentElement.style.setProperty('--scale', S.scale); localStorage.setItem('ew-scale', S.scale); renderPosts(); }
+function toggleFullscreen() {
+  const d = document, el = d.documentElement;
+  if (d.fullscreenElement || d.webkitFullscreenElement) (d.exitFullscreen || d.webkitExitFullscreen).call(d);
+  else (el.requestFullscreen || el.webkitRequestFullscreen)?.call(el);
+}
+
+/* ---------------- rendu des publications ---------------- */
+function visiblePosts() {
+  if (teacherMode()) return S.posts.filter(p => p.status !== 'pending');
+  if (S.isOwner) return S.posts.filter(p => p.status === 'approved' && !p.hidden);
+  return S.posts.filter(p => !p.hidden && (p.status === 'approved' || (isAuthor(p) && p.status === 'pending')));
+}
+function ensureContainers() {
+  const fmt = effFormat(), tm = teacherMode(), cp = canPost(), secs = S.wall.sections || [];
+  const key = JSON.stringify([fmt, tm, cp, fmt === 'columns' ? secs : 0]);
+  const scroll = $('#scroll'); if (!scroll) return;
+  if (S.ckey === key && scroll.firstChild) return;
+  S.ckey = key; scroll.innerHTML = ''; S.lists = {}; scroll.className = 'scroll f-' + fmt;
+  if (fmt === 'columns') {
+    const lanes = document.createElement('div'); lanes.className = 'lanes';
+    (secs.length ? secs : [{ id: 's1', title: 'Posts' }]).forEach(s => {
+      const lane = document.createElement('section'); lane.className = 'lane';
+      lane.innerHTML = `<div class="lane-head"><span class="lane-title">${esc(s.title)}</span>${cp ? `<button class="lane-add" title="Publier dans cette colonne">＋</button>` : ''}</div><div class="lane-list" data-section="${esc(s.id)}"></div>`;
+      const l = $('.lane-list', lane); S.lists[s.id] = l;
+      if (cp) $('.lane-add', lane).onclick = () => openEditor(null, { sectionId: s.id });
+      if (tm) $('.lane-title', lane).ondblclick = () => renameSection(s.id);
+      lanes.appendChild(lane); makeSortable(l);
+    });
+    if (tm) { const add = document.createElement('button'); add.className = 'lane-new'; add.textContent = '＋ Nouvelle colonne'; add.onclick = addSection; lanes.appendChild(add); }
+    scroll.appendChild(lanes);
+  } else if (fmt === 'free') {
+    const c = document.createElement('div'); c.className = 'canvas'; S.lists.main = c; scroll.appendChild(c);
+  } else {
+    const l = document.createElement('div'); l.className = 'list'; S.lists.main = l; scroll.appendChild(l); if (fmt !== 'stack') makeSortable(l);
+  }
+  const empty = document.createElement('div'); empty.className = 'empty'; empty.id = 'empty'; empty.hidden = true; scroll.appendChild(empty);
+}
+function renderPosts() {
+  if (!S.wall || !$('#scroll')) return;
+  ensureContainers();
+  const fmt = effFormat(), vis = visiblePosts(), ids = new Set(vis.map(p => p.id));
+  for (const [id, el] of S.els) if (!ids.has(id)) { el.remove(); S.els.delete(id); }
+  const secIds = (S.wall.sections || []).map(s => s.id), first = secIds[0] || 's1', groups = {};
+  vis.forEach(p => { const k = fmt === 'columns' ? (secIds.includes(p.sectionId) ? p.sectionId : first) : 'main'; (groups[k] = groups[k] || []).push(p); });
+  for (const k in S.lists) {
+    const list = S.lists[k], arr = groups[k] || [];
+    if (fmt === 'stack') arr.sort((a, b) => (a.y || 0) - (b.y || 0) || (a.x || 0) - (b.x || 0)); else arr.sort((a, b) => (a.order || 0) - (b.order || 0));
+    arr.forEach((p, i) => {
+      const el = cardEl(p);
+      if (fmt === 'free') { if (p.x == null) { const col = i % 4, row = Math.floor(i / 4); p.x = 40 + col * 340; p.y = 40 + row * 330; } if (S.dragging !== p.id) placeFree(el, p); el.style.zIndex = i + 1; }
+      else { el.style.left = el.style.top = el.style.width = el.style.height = el.style.zIndex = ''; el.classList.remove('fixed-h'); }
+      if (list.children[i] !== el) list.insertBefore(el, list.children[i] || null);
+    });
+  }
+  if (fmt === 'free') sizeCanvas(vis);
+  const empty = $('#empty');
+  if (empty) { empty.hidden = !S.postsLoaded || vis.length > 0; empty.innerHTML = canPost() ? `Ce mur est encore vide.<br>Appuie sur <b>＋</b> pour publier !` : 'Ce mur est encore vide.'; }
+  updatePending();
+}
+function placeFree(el, p) { const s = S.scale; el.style.left = (p.x ?? 40) * s + 'px'; el.style.top = (p.y ?? 40) * s + 'px'; el.style.width = (p.w || 300) * s + 'px'; el.style.height = p.h ? p.h * s + 'px' : ''; el.classList.toggle('fixed-h', !!p.h); }
+function sizeCanvas(vis) { const c = S.lists.main; if (!c) return; let mw = 1400, mh = 900; vis.forEach(p => { mw = Math.max(mw, (p.x || 0) + (p.w || 300) + 400); mh = Math.max(mh, (p.y || 0) + (p.h || 420) + 400); }); c.style.width = mw * S.scale + 'px'; c.style.height = mh * S.scale + 'px'; }
+function makeSortable(list) {
+  if (!window.Sortable || !teacherMode()) return;
+  Sortable.create(list, { group: 'posts', handle: '.drag', animation: 160, ghostClass: 'ghost', chosenClass: 'chosen', onStart: () => document.body.classList.add('is-dragging'), onEnd: onSortEnd });
+}
+function onSortEnd(evt) {
+  document.body.classList.remove('is-dragging');
+  const el = evt.item, p = el._post; if (!p) return;
+  const list = evt.to, kids = [...list.children], idx = kids.indexOf(el);
+  const prev = kids[idx - 1]?._post?.order, next = kids[idx + 1]?._post?.order;
+  const order = prev == null && next == null ? Date.now() : prev == null ? next - 1000 : next == null ? prev + 1000 : (prev + next) / 2;
+  const patch = { order }; if (list.dataset.section) patch.sectionId = list.dataset.section;
+  if (patch.order === p.order && patch.sectionId === p.sectionId) return;
+  applyLocal(p, patch);
+  guard(() => S.store.updatePost(S.wallId, p.id, patch));
+}
+function cardEl(p) {
+  let el = S.els.get(p.id);
+  if (!el) { el = document.createElement('article'); el.dataset.id = p.id; S.els.set(p.id, el); }
+  el._post = p;
+  const sig = bodySig(p); if (el._sig !== sig) { el._sig = sig; fillCard(el, p); }
+  const fs = footSig(p); if (el._fsig !== fs) { el._fsig = fs; fillFoot(el, p); }
+  return el;
+}
+function bodySig(p) {
+  let w = null; if (p.widget) { w = { ...p.widget }; ['running', 'endsAt', 'remaining', 'startedAt', 'acc'].forEach(k => delete w[k]); }
+  return JSON.stringify([p.type, p.title, p.body, p.color, p.size, p.fs, p.hl, p.icon, p.pulse, p.url, p.yt, (p.img || '').length, (p.img || '').slice(-32), (p.audio || '').length, w, p.hidden, p.status, teacherMode(), isAuthor(p), effFormat() === 'free']);
+}
+function footSig(p) { const w = S.wall; return JSON.stringify([Object.keys(p.likes || {}).length, !!(p.likes || {})[S.user?.uid], p.cc || 0, w.allowLikes, w.allowComments, w.showAuthors, teacherMode(), p.authorName]); }
+function fillCard(el, p) {
+  const tm = teacherMode(), mine = isAuthor(p) && !S.isOwner, t = p.type, isW = !!TYPES[t]?.widget;
+  el.className = ['card', 't-' + t, 'sz-' + (p.size || 'M'), p.hidden ? 'is-hidden' : '', p.status === 'pending' ? 'is-pending' : '', t === 'highlight' ? 'hl' : '', t === 'highlight' && p.pulse ? 'pulse' : '', p.color === 'dark' ? 'dark' : '', isW ? 'widget' : ''].filter(Boolean).join(' ');
+  el.style.setProperty('--cbg', COLORS[p.color] || COLORS.white);
+  el.style.setProperty('--hl', HL[p.hl] || HL.red);
+  el.style.setProperty('--fs', p.fs || 1);
+  const badges = []; if (p.hidden && tm) badges.push('<span class="badge b-hidden">🙈 Caché</span>'); if (p.status === 'pending') badges.push('<span class="badge b-pend">⏳ En attente</span>');
+  let tools = '';
+  if (tm) tools = `<button class="ct" data-a="edit" title="Modifier">✏️</button><button class="ct" data-a="hide" title="${p.hidden ? 'Révéler aux élèves' : 'Cacher aux élèves'}">${p.hidden ? '👁' : '🙈'}</button><button class="ct" data-a="del" title="Supprimer">🗑</button>`;
+  else if (mine) tools = `<button class="ct" data-a="del" title="Supprimer">🗑</button>`;
+  const head = (tm || badges.length || tools) ? `<div class="card-head">${tm ? '<span class="drag" title="Déplacer">⠿</span>' : ''}${badges.join('')}<div class="card-tools">${tools}</div></div>` : '';
+  const free = effFormat() === 'free';
+  el.innerHTML = head + `<div class="card-body">${bodyHTML(p, tm)}</div><div class="card-foot"></div>` + (tm && free ? '<span class="rz" title="Redimensionner"></span>' : '');
+  el._fsig = null;
+  $$('[data-a]', el).forEach(b => b.onclick = e => { e.stopPropagation(); cardAction(el._post, b.dataset.a, el); });
+  $$('[data-act]', el).forEach(b => b.onclick = e => { e.stopPropagation(); widgetAct(el._post, b.dataset.act, +b.dataset.m || 0); });
+  const img = $('.pimg', el); if (img) img.onclick = () => lightbox(el._post.img);
+  if (tm && free) { bindFreeDrag(el); bindResize(el); }
+  el._v = null; $$('[data-tick]', el).forEach(n => n._v = null);
+}
+function bodyHTML(p, tm) {
+  const T = p.title ? `<h3>${esc(p.title)}</h3>` : '', B = p.body ? `<div class="txt">${linkify(p.body)}</div>` : '', w = p.widget || {};
+  const emb = (icon, label, src) => `<div class="emb-bar"><span>${icon} ${esc(p.title || label)}</span><button class="ct" data-a="fs" title="Plein écran">⛶</button><a class="ct" href="${esc(src)}" target="_blank" rel="noopener" title="Ouvrir dans un nouvel onglet">↗</a></div><div class="emb"><iframe src="${esc(src)}" allow="fullscreen; autoplay; clipboard-write; encrypted-media" allowfullscreen loading="lazy"></iframe></div>`;
+  switch (p.type) {
+    case 'text': return T + B;
+    case 'highlight': return `<div class="hl-inner">${p.icon ? `<div class="hl-icon">${esc(p.icon)}</div>` : ''}${T}${B}</div>`;
+    case 'image': return (p.img ? `<img class="pimg" src="${p.img}" alt="${esc(p.title || 'image')}" loading="lazy">` : '') + T + B;
+    case 'audio': return T + (p.audio ? `<audio controls preload="metadata" src="${p.audio}"></audio>` : '') + B;
+    case 'link': { const h = hostOf(p.url); return `<a class="plink" href="${esc(p.url)}" target="_blank" rel="noopener"><img src="https://www.google.com/s2/favicons?sz=64&domain=${encodeURIComponent(h)}" alt=""><span><b>${esc(p.title || h)}</b><small>${esc(h)}</small></span><i>↗</i></a>` + B; }
+    case 'youtube': return T + `<div class="vid"><iframe src="https://www.youtube-nocookie.com/embed/${esc(p.yt)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen loading="lazy"></iframe></div>`;
+    case 'clock': return (p.title ? `<div class="w-title">${esc(p.title)}</div>` : '') + `<div class="w-digits" data-tick="clock"></div>` + (w.showDate !== false ? `<div class="w-date" data-tick="date"></div>` : '');
+    case 'timer': return (p.title ? `<div class="w-title">${esc(p.title)}</div>` : '') + `<div class="w-digits" data-tick="timer"></div><div class="w-bar"><i></i></div>` + (S.isOwner ? `<div class="w-ctrl"><button class="wb big" data-act="toggle">▶</button><button class="wb" data-act="reset" title="Remettre à zéro">↺</button>${[1, 2, 3, 5, 10].map(m => `<button class="wb" data-act="preset" data-m="${m}">${m}′</button>`).join('')}<button class="wb" data-act="plus">+1′</button></div>` : '');
+    case 'stopwatch': return (p.title ? `<div class="w-title">${esc(p.title)}</div>` : '') + `<div class="w-digits" data-tick="stop"></div>` + (S.isOwner ? `<div class="w-ctrl"><button class="wb big" data-act="toggle">▶</button><button class="wb" data-act="reset" title="Remettre à zéro">↺</button></div>` : '');
+    case 'quizlet': return emb('🃏', 'Quizlet', `https://quizlet.com/${encodeURIComponent(w.qid)}/${encodeURIComponent(w.mode || 'flashcards')}/embed`);
+    case 'embed': return emb('🎮', 'Jeu', w.url || p.url);
+  }
+  return T + B;
+}
+function fillFoot(el, p) {
+  const f = $('.card-foot', el); if (!f) return;
+  if (TYPES[p.type]?.widget || p.type === 'highlight') { f.hidden = true; f.innerHTML = ''; return; }
+  const w = S.wall, showA = (w.showAuthors !== false || teacherMode()) && p.authorUid !== w.ownerUid;
+  const right = [];
+  if (w.allowLikes !== false) { const n = Object.keys(p.likes || {}).length, on = !!(p.likes || {})[S.user?.uid]; right.push(`<button class="fbtn like ${on ? 'on' : ''}" data-f="like" title="J'aime">${on ? '❤️' : '🤍'} ${n || ''}</button>`); }
+  if (w.allowComments !== false || (p.cc || 0) > 0) right.push(`<button class="fbtn" data-f="cm" title="Commentaires">💬 ${p.cc || ''}</button>`);
+  f.hidden = !showA && !right.length;
+  f.innerHTML = `<span class="who">${showA ? esc(p.authorName || 'Élève') : ''}</span><span class="sp"></span>` + right.join('');
+  $$('[data-f]', f).forEach(b => b.onclick = e => {
+    e.stopPropagation(); const post = el._post;
+    if (b.dataset.f === 'like') { if (post.status === 'pending') return; const on = !(post.likes || {})[S.user.uid]; post.likes = { ...(post.likes || {}) }; if (on) post.likes[S.user.uid] = true; else delete post.likes[S.user.uid]; el._fsig = null; cardEl(post); guard(() => S.store.toggleLike(S.wallId, post.id, S.user.uid, on)); }
+    else openComments(post);
+  });
+}
+async function cardAction(p, a, el) {
+  if (a === 'edit') return openEditor(p);
+  if (a === 'hide') { const v = !p.hidden; p.hidden = v; el._sig = null; cardEl(p); return guard(() => S.store.updatePost(S.wallId, p.id, { hidden: v })); }
+  if (a === 'del') { if (await confirmBox('Supprimer cette publication ?', 'Supprimer')) guard(() => S.store.deletePost(S.wallId, p.id)); return; }
+  if (a === 'fs') { const t = $('.emb', el) || el; (t.requestFullscreen || t.webkitRequestFullscreen)?.call(t); }
+}
+function bindFreeDrag(el) {
+  const h = $('.drag', el); if (!h) return;
+  h.onpointerdown = e => {
+    if (effFormat() !== 'free') return; e.preventDefault();
+    const p = el._post, s = S.scale, sx = e.clientX, sy = e.clientY, ox = p.x ?? 40, oy = p.y ?? 40;
+    S.dragging = p.id; el.classList.add('dragging'); document.body.classList.add('is-dragging'); h.setPointerCapture(e.pointerId);
+    const mv = ev => { const nx = Math.max(0, ox + (ev.clientX - sx) / s), ny = Math.max(0, oy + (ev.clientY - sy) / s); el.style.left = nx * s + 'px'; el.style.top = ny * s + 'px'; el._nx = nx; el._ny = ny; };
+    const up = () => {
+      h.removeEventListener('pointermove', mv); h.removeEventListener('pointerup', up); h.removeEventListener('pointercancel', up);
+      el.classList.remove('dragging'); document.body.classList.remove('is-dragging'); S.dragging = null;
+      if (el._nx != null) { const patch = { x: Math.round(el._nx), y: Math.round(el._ny), order: Date.now() }; applyLocal(p, patch); el._nx = null; renderPosts(); guard(() => S.store.updatePost(S.wallId, p.id, patch)); }
+    };
+    h.addEventListener('pointermove', mv); h.addEventListener('pointerup', up); h.addEventListener('pointercancel', up);
+  };
+}
+function bindResize(el) {
+  const h = $('.rz', el); if (!h) return;
+  h.onpointerdown = e => {
+    e.preventDefault(); e.stopPropagation();
+    const p = el._post, s = S.scale, sx = e.clientX, sy = e.clientY, ow = p.w || el.offsetWidth / s, oh = p.h || el.offsetHeight / s;
+    S.dragging = p.id; document.body.classList.add('is-dragging'); h.setPointerCapture(e.pointerId);
+    const mv = ev => { const nw = Math.max(180, ow + (ev.clientX - sx) / s), nh = Math.max(110, oh + (ev.clientY - sy) / s); el.style.width = nw * s + 'px'; el.style.height = nh * s + 'px'; el.classList.add('fixed-h'); el._nw = nw; el._nh = nh; };
+    const up = () => {
+      h.removeEventListener('pointermove', mv); h.removeEventListener('pointerup', up); h.removeEventListener('pointercancel', up);
+      document.body.classList.remove('is-dragging'); S.dragging = null;
+      if (el._nw != null) { const patch = { w: Math.round(el._nw), h: Math.round(el._nh) }; applyLocal(p, patch); el._nw = null; guard(() => S.store.updatePost(S.wallId, p.id, patch)); }
+    };
+    h.addEventListener('pointermove', mv); h.addEventListener('pointerup', up); h.addEventListener('pointercancel', up);
+  };
+}
+
+/* ---------------- widgets (horloge, minuteur, chrono) ---------------- */
+function widgetAct(p, act, m) {
+  const w = p.widget || {}, now = Date.now(); let patch = {};
+  if (p.type === 'timer') {
+    const rem = w.running ? Math.max(0, w.endsAt - now) : (w.remaining ?? w.duration);
+    if (act === 'toggle') { if (w.running) patch = { 'widget.running': false, 'widget.remaining': rem }; else { const r = rem > 0 ? rem : w.duration; patch = { 'widget.running': true, 'widget.endsAt': now + r, 'widget.remaining': r }; } }
+    if (act === 'reset') patch = { 'widget.running': false, 'widget.remaining': w.duration };
+    if (act === 'preset') patch = { 'widget.running': false, 'widget.duration': m * 60000, 'widget.remaining': m * 60000 };
+    if (act === 'plus') { patch = w.running ? { 'widget.endsAt': w.endsAt + 60000 } : { 'widget.remaining': rem + 60000 }; patch['widget.duration'] = Math.max(w.duration || 0, rem + 60000); }
+  } else if (p.type === 'stopwatch') {
+    if (act === 'toggle') patch = w.running ? { 'widget.running': false, 'widget.acc': (w.acc || 0) + (now - w.startedAt) } : { 'widget.running': true, 'widget.startedAt': now };
+    if (act === 'reset') patch = { 'widget.running': false, 'widget.acc': 0, 'widget.startedAt': 0 };
+  }
+  applyLocal(p, patch); tick();
+  guard(() => S.store.updatePost(S.wallId, p.id, patch));
+}
+function tick() {
+  if (!S.els.size) return;
+  const now = Date.now(), d = new Date(now);
+  for (const el of S.els.values()) {
+    const p = el._post; if (!p || !TYPES[p.type]?.widget) continue; const w = p.widget || {};
+    const set = (sel, html) => { const n = $(sel, el); if (n && n._v !== html) { n.innerHTML = html; n._v = html; } };
+    if (p.type === 'clock') { set('[data-tick="clock"]', clockText(d, w.h12)); set('[data-tick="date"]', englishDate(d)); }
+    else if (p.type === 'timer') {
+      const rem = w.running ? Math.max(0, (w.endsAt || 0) - now) : (w.remaining ?? w.duration ?? 0), frac = w.duration ? rem / w.duration : 0;
+      set('[data-tick="timer"]', fmtTimer(rem));
+      const bar = $('.w-bar i', el); if (bar) bar.style.width = (Math.min(1, frac) * 100).toFixed(1) + '%';
+      el.classList.toggle('warn', rem > 0 && frac <= .2); el.classList.toggle('done', rem === 0 && (w.duration || 0) > 0);
+      set('[data-act="toggle"]', w.running ? '⏸' : '▶');
+      if (w.running && rem === 0 && S.isOwner && el._doneAt !== w.endsAt) { el._doneAt = w.endsAt; beep(); const patch = { 'widget.running': false, 'widget.remaining': 0 }; applyLocal(p, patch); guard(() => S.store.updatePost(S.wallId, p.id, patch)); }
+    } else if (p.type === 'stopwatch') {
+      set('[data-tick="stop"]', fmtStop((w.acc || 0) + (w.running ? now - (w.startedAt || now) : 0)));
+      set('[data-act="toggle"]', w.running ? '⏸' : '▶');
+    }
+  }
+}
+setInterval(tick, 200);
+
+/* ---------------- éditeur de publication ---------------- */
+function fieldsHTML(type, d, owner) {
+  const T = (ph = 'Titre (facultatif)') => `<label class="f">Titre</label><input name="title" maxlength="140" value="${esc(d.title || '')}" placeholder="${esc(ph)}">`;
+  const B = (ph = 'Écris ici…') => `<label class="f">Texte</label><textarea name="body" maxlength="3000" placeholder="${esc(ph)}">${esc(d.body || '')}</textarea>`;
+  const colors = `<label class="f">Couleur de la carte</label><div class="swatches">${Object.entries(COLORS).map(([k, c]) => `<label class="sw" style="--c:${c}" title="${k}"><input type="radio" name="color" value="${k}" ${(d.color || 'white') === k ? 'checked' : ''}><span></span></label>`).join('')}</div>`;
+  const fs = `<div><label class="f">Taille du texte</label><select name="fs">${[[1, 'Normale'], [1.3, 'Grande'], [1.7, 'Très grande'], [2.3, 'Énorme']].map(([v, l]) => `<option value="${v}" ${(+d.fs || 1) === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>`;
+  const size = effFormat() !== 'free' ? `<div><label class="f">Taille de la carte</label><select name="size">${[['S', 'Petite'], ['M', 'Moyenne'], ['L', 'Grande']].map(([v, l]) => `<option value="${v}" ${(d.size || 'M') === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>` : '';
+  const sec = S.wall.format === 'columns' && (S.wall.sections || []).length > 1 ? `<label class="f">Colonne</label><select name="sectionId">${S.wall.sections.map(s => `<option value="${esc(s.id)}" ${d.sectionId === s.id ? 'selected' : ''}>${esc(s.title)}</option>`).join('')}</select>` : '';
+  const row = (...a) => { const x = a.filter(Boolean); return x.length ? `<div class="row2">${x.join('')}</div>` : ''; };
+  switch (type) {
+    case 'text': return T() + B() + row(fs, size) + colors + sec;
+    case 'highlight': return T('Ex : Homework for Monday!') + B('Message important…') + `<label class="f">Couleur du cadre</label><div class="swatches">${Object.entries(HL).map(([k, c]) => `<label class="sw" style="--c:${c}"><input type="radio" name="hl" value="${k}" ${(d.hl || 'red') === k ? 'checked' : ''}><span></span></label>`).join('')}</div>` + row(`<div><label class="f">Icône</label><select name="icon">${['', '⚠️', '⭐', '📌', '❗', '💡', '🎯', '📣', '📅', '✅'].map(i => `<option value="${i}" ${(d.icon || '') === i ? 'selected' : ''}>${i || 'Aucune'}</option>`).join('')}</select></div>`, fs) + row(size) + `<label class="chk"><input type="checkbox" name="pulse" ${d.pulse ? 'checked' : ''}> Faire pulser le cadre pour attirer l'attention</label>` + colors + sec;
+    case 'image': return `<div class="drop" id="img-drop"><div id="img-prev">${d.img ? `<img src="${d.img}" alt="">` : '🖼️<br>Choisir une photo<br><small>ou coller une image (⌘V)</small>'}</div><input type="file" accept="image/*" id="img-file" hidden></div>` + T('Légende (facultatif)') + B('Description (facultatif)') + row(size) + colors + sec;
+    case 'audio': return `<div class="rec"><button type="button" class="btn primary" id="rec-btn">⏺ Enregistrer</button><span id="rec-t" class="muted"></span><label class="btn" for="aud-file">📁 Choisir un fichier</label><input type="file" accept="audio/*" id="aud-file" hidden></div><div id="aud-prev" style="margin-top:10px">${d.audio ? `<audio controls src="${d.audio}"></audio>` : ''}</div><p class="muted small">90 secondes maximum.</p>` + T() + B('Description (facultatif)') + colors + sec;
+    case 'link': return `<label class="f">Adresse du lien</label><input name="url" type="url" inputmode="url" placeholder="https://…" value="${esc(d.url || '')}">` + T() + B('Description (facultatif)') + row(size) + colors + sec;
+    case 'youtube': return `<label class="f">Lien de la vidéo YouTube</label><input name="url" inputmode="url" placeholder="https://www.youtube.com/watch?v=…" value="${esc(d.url || '')}">` + T() + row(size) + colors + sec;
+    case 'clock': return T('Ex : What time is it?') + `<label class="chk"><input type="checkbox" name="widget.h12" ${d.widget?.h12 ? 'checked' : ''}> Format anglais 12 h (am / pm)</label><label class="chk"><input type="checkbox" name="widget.showDate" ${d.widget?.showDate !== false ? 'checked' : ''}> Afficher la date en anglais</label>` + row(size) + colors + sec;
+    case 'timer': return T('Ex : Work in pairs') + `<label class="f">Durée (minutes)</label><input name="widget.min" type="number" min="0.25" max="180" step="0.25" value="${d.widget?.duration ? d.widget.duration / 60000 : 5}">` + row(size) + colors + sec;
+    case 'stopwatch': return T('Ex : Speed challenge') + row(size) + colors + sec;
+    case 'quizlet': return `<label class="f">Lien du set Quizlet</label><input name="url" inputmode="url" placeholder="https://quizlet.com/fr/123456789/…" value="${esc(d.url || '')}"><p class="muted small">Collez l'adresse du set (ou son lien d'intégration).</p><label class="f">Activité</label><select name="widget.mode">${[['flashcards', 'Flashcards'], ['learn', 'Learn'], ['match', 'Match'], ['spell', 'Spell'], ['test', 'Test']].map(([v, l]) => `<option value="${v}" ${(d.widget?.mode || 'flashcards') === v ? 'selected' : ''}>${l}</option>`).join('')}</select>` + T() + row(size) + sec;
+    case 'embed': { const games = S.teacher?.games || []; return (games.length ? `<label class="f">Ma bibliothèque de jeux</label><select id="lib"><option value="">— Choisir un jeu —</option>${games.map((g, i) => `<option value="${i}">${esc(g.title)}</option>`).join('')}</select>` : '') + `<label class="f">Adresse du jeu ou code d'intégration</label><input name="url" placeholder="https://… ou <iframe …>" value="${esc(d.url || '')}"><p class="muted small">Nos jeux, Wordwall, LearningApps, Genially… tout ce qui accepte l'intégration.</p>` + T('Nom du jeu') + `<label class="chk"><input type="checkbox" name="saveLib"> Ajouter à ma bibliothèque de jeux</label>` + row(size) + sec; }
+  }
+  return '';
+}
+function openEditor(post, opts = {}) {
+  const owner = S.isOwner, editing = !!post;
+  let type = post?.type || opts.type || 'text';
+  const d = post ? clone(post) : { color: 'white', size: 'M', fs: 1, hl: 'red', widget: {}, sectionId: opts.sectionId };
+  const media = { img: post?.img || null, audio: post?.audio || null };
+  const types = Object.entries(TYPES).filter(([, t]) => owner || !t.teacher).filter(([k, t]) => !opts.widgetsOnly || t.widget || k === 'highlight');
+  const root = document.createElement('div');
+  root.innerHTML = (editing ? '' : `<div class="type-chips">${types.map(([k, t]) => `<button type="button" class="chip" data-type="${k}">${t.icon} ${t.label}</button>`).join('')}</div>`) + '<div class="fields"></div>';
+  const fields = $('.fields', root);
+  let rec = null;
+  const collect = () => $$('[name]', fields).forEach(i => { if (i.type === 'radio') { if (i.checked) setPath(d, i.name, i.value); } else if (i.type === 'checkbox') setPath(d, i.name, i.checked); else setPath(d, i.name, i.value); });
+  function draw() {
+    $$('.chip', root).forEach(c => c.classList.toggle('on', c.dataset.type === type));
+    fields.innerHTML = fieldsHTML(type, d, owner);
+    if (type === 'image') {
+      const drop = $('#img-drop', fields), file = $('#img-file', fields);
+      const take = async f => { if (!f || !f.type.startsWith('image/')) return; $('#img-prev', fields).innerHTML = '⏳ Préparation…'; try { media.img = await compressImage(f); d.img = media.img; $('#img-prev', fields).innerHTML = `<img src="${media.img}" alt="">`; } catch (e) { toast("Image illisible.", 'err'); $('#img-prev', fields).textContent = '🖼️ Choisir une photo'; } };
+      drop.onclick = e => { if (e.target !== file) file.click(); };
+      file.onchange = () => take(file.files[0]);
+      drop.ondragover = e => e.preventDefault(); drop.ondrop = e => { e.preventDefault(); take(e.dataTransfer.files[0]); };
+      root.onpaste = e => { const it = [...(e.clipboardData?.items || [])].find(i => i.type.startsWith('image/')); if (it) take(it.getAsFile()); };
+    } else root.onpaste = null;
+    if (type === 'audio') {
+      const btn = $('#rec-btn', fields), tl = $('#rec-t', fields), prev = $('#aud-prev', fields);
+      const showAudio = src => { prev.innerHTML = `<audio controls src="${src}"></audio>`; };
+      $('#aud-file', fields).onchange = async e => { const f = e.target.files[0]; if (!f) return; if (f.size > 700000) return toast('Fichier trop lourd (700 Ko max). Enregistre plutôt directement.', 'err'); media.audio = await blobToData(f); d.audio = media.audio; showAudio(media.audio); };
+      btn.onclick = async () => {
+        if (rec) { rec.stop(); return; }
+        if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) return toast("L'enregistrement n'est pas disponible sur cet appareil.", 'err');
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          const mime = ['audio/webm;codecs=opus', 'audio/mp4', 'audio/webm'].find(m => MediaRecorder.isTypeSupported?.(m)) || '';
+          const r = new MediaRecorder(stream, mime ? { mimeType: mime, audioBitsPerSecond: 32000 } : { audioBitsPerSecond: 32000 });
+          const chunks = []; const t0 = Date.now(); rec = r;
+          const iv = setInterval(() => { const s = Math.floor((Date.now() - t0) / 1000); tl.textContent = `🔴 ${s} s`; if (s >= 90) r.stop(); }, 250);
+          r.ondataavailable = e => e.data.size && chunks.push(e.data);
+          r.onstop = async () => { clearInterval(iv); stream.getTracks().forEach(t => t.stop()); rec = null; btn.textContent = '⏺ Recommencer'; btn.classList.remove('recording'); tl.textContent = ''; const blob = new Blob(chunks, { type: r.mimeType || 'audio/webm' }); media.audio = await blobToData(blob); d.audio = media.audio; showAudio(media.audio); };
+          r.start(); btn.textContent = '⏹ Arrêter'; btn.classList.add('recording');
+        } catch (e) { toast("Micro refusé ou indisponible.", 'err'); }
+      };
+    }
+    const lib = $('#lib', fields);
+    if (lib) lib.onchange = () => { const g = S.teacher.games[+lib.value]; if (!g) return; $('[name=url]', fields).value = g.url; $('[name=title]', fields).value = g.title; };
+  }
+  root.addEventListener('click', e => { const c = e.target.closest('.chip'); if (c) { collect(); type = c.dataset.type; draw(); } });
+  draw();
+  modal({
+    title: editing ? 'Modifier la publication' : (opts.widgetsOnly ? '🧩 Ajouter un widget' : 'Nouvelle publication'), body: root, wide: true,
+    onClose: () => { if (rec) try { rec.stop(); } catch { } },
+    actions: [{ label: 'Annuler' }, { label: editing ? 'Enregistrer' : 'Publier', cls: 'primary', onClick: async () => { collect(); await savePost(type, d, media, post, opts); } }]
+  });
+}
+async function savePost(type, d, media, post, opts) {
+  const editing = !!post, owner = S.isOwner;
+  const base = { type, title: (d.title || '').trim(), body: (d.body || '').trim(), color: d.color || 'white', size: d.size || 'M', fs: +d.fs || 1 };
+  if (S.wall.format === 'columns') base.sectionId = d.sectionId || opts.sectionId || (S.wall.sections || [])[0]?.id || 's1';
+  switch (type) {
+    case 'text': if (!base.title && !base.body) fail('Écris quelque chose 🙂'); break;
+    case 'highlight': if (!base.title && !base.body) fail('Écris le message à mettre en valeur.'); Object.assign(base, { hl: d.hl || 'red', icon: d.icon || '', pulse: !!d.pulse }); break;
+    case 'image': if (!media.img) fail('Choisis une image.'); base.img = media.img; break;
+    case 'audio': if (!media.audio) fail("Enregistre ou choisis un son."); base.audio = media.audio; break;
+    case 'link': { let u = (d.url || '').trim(); if (!u) fail('Colle une adresse.'); if (!/^https?:\/\//i.test(u)) u = 'https://' + u; try { new URL(u); } catch { fail('Adresse invalide.'); } base.url = u; break; }
+    case 'youtube': { const id = ytId(d.url); if (!id) fail('Lien YouTube non reconnu.'); base.url = d.url.trim(); base.yt = id; break; }
+    case 'clock': base.widget = { h12: !!d.widget?.h12, showDate: d.widget?.showDate !== false }; break;
+    case 'timer': { const ms = Math.round(Math.max(.25, +d.widget?.min || 5) * 60000); base.widget = (editing && post.widget?.duration === ms) ? { ...post.widget } : { duration: ms, remaining: ms, running: false, endsAt: 0 }; delete base.widget.min; break; }
+    case 'stopwatch': base.widget = editing ? { ...post.widget } : { running: false, startedAt: 0, acc: 0 }; break;
+    case 'quizlet': { const q = quizletId(d.url); if (!q) fail('Lien Quizlet non reconnu (il doit contenir le numéro du set).'); base.url = d.url.trim(); base.widget = { qid: q, mode: d.widget?.mode || 'flashcards' }; break; }
+    case 'embed': { const u = embedUrl(d.url); if (!u) fail("Adresse ou code d'intégration invalide."); base.url = u; base.widget = { url: u }; break; }
+  }
+  if ((base.img || '').length + (base.audio || '').length > 980000) fail('Fichier trop lourd. Essaie une image plus petite ou un son plus court.');
+  if (editing) { await S.store.updatePost(S.wallId, post.id, clean(base)); toast('Modifié ✓', 'ok'); }
+  else {
+    if (!owner && S.wall.studentMode === 'closed') fail('Les publications sont fermées pour le moment.');
+    const now = Date.now();
+    const full = { ...base, authorUid: S.user.uid, authorName: getName() || 'Élève', status: owner ? 'approved' : (S.wall.studentMode === 'review' ? 'pending' : 'approved'), hidden: false, likes: {}, cc: 0, createdAt: now, order: now };
+    if ((S.wall.format || 'columns') === 'free') {
+      const sc = $('#scroll'), s = S.scale, isW = !!TYPES[type].widget;
+      full.w = ['quizlet', 'embed'].includes(type) ? 520 : type === 'youtube' ? 420 : isW ? 340 : 300;
+      full.h = ['quizlet', 'embed'].includes(type) ? 480 : type === 'timer' ? 280 : type === 'clock' ? 220 : type === 'stopwatch' ? 230 : null;
+      full.x = Math.round((sc.scrollLeft + sc.clientWidth / 2) / s - full.w / 2 + (Math.random() * 80 - 40));
+      full.y = Math.round((sc.scrollTop + sc.clientHeight / 3) / s + (Math.random() * 60 - 30));
+      if (S.mobile) { full.x = 40; full.y = Math.max(0, ...S.posts.map(p => (p.y || 0) + (p.h || 300))) + 30; }
+    }
+    await S.store.addPost(S.wallId, clean(full));
+    if (full.status === 'pending') toast('Envoyé ! Ta publication attend la validation du professeur. ⏳', 'ok');
+    if (type === 'embed' && d.saveLib && owner) { const games = [...(S.teacher.games || []).filter(g => g.url !== base.url), { title: base.title || hostOf(base.url), url: base.url }]; S.teacher.games = games; guard(() => S.store.saveTeacher(S.user.uid, { games })); }
+  }
+}
+
+/* ---------------- commentaires ---------------- */
+function openComments(p) {
+  const canC = S.isOwner || S.wall.allowComments !== false;
+  const root = document.createElement('div');
+  root.innerHTML = `<div class="cm-list"><p class="muted">Chargement…</p></div>${canC ? `<form class="cm-form"><input name="t" maxlength="500" placeholder="Écris un commentaire…" autocomplete="off"><button class="btn primary">Envoyer</button></form>` : '<p class="muted">Les commentaires sont fermés.</p>'}`;
+  let unsub = null;
+  modal({ title: '💬 Commentaires', body: root, onClose: () => unsub && unsub() });
+  unsub = S.store.watchComments(S.wallId, p.id, list => {
+    list.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+    const L = $('.cm-list', root);
+    L.innerHTML = list.length ? list.map(c => `<div class="cm"><b>${esc(c.authorName || 'Élève')}</b>${linkify(c.text)}${(S.isOwner || c.authorUid === S.user.uid) ? `<button class="ct" data-id="${esc(c.id)}" title="Supprimer">🗑</button>` : ''}</div>`).join('') : '<p class="muted">Pas encore de commentaire. Sois le premier !</p>';
+    $$('.ct', L).forEach(b => b.onclick = () => guard(() => S.store.deleteComment(S.wallId, p.id, b.dataset.id)));
+    L.scrollTop = L.scrollHeight;
+  });
+  const f = $('.cm-form', root);
+  if (f) { setTimeout(() => f.t.focus(), 50); f.onsubmit = e => { e.preventDefault(); const t = f.t.value.trim(); if (!t) return; f.t.value = ''; guard(() => S.store.addComment(S.wallId, p.id, { text: t, authorUid: S.user.uid, authorName: getName() || 'Élève', createdAt: Date.now() })); }; }
+}
+
+/* ---------------- modération ---------------- */
+function toggleTray() { if (S.trayEl) { S.trayEl.remove(); S.trayEl = null; return; } S.trayEl = document.createElement('aside'); S.trayEl.className = 'tray'; document.body.appendChild(S.trayEl); renderTray(); }
+function previewHTML(p) {
+  let h = p.title ? `<b>${esc(p.title)}</b><br>` : '';
+  if (p.img) h += `<img src="${p.img}" alt=""><br>`;
+  if (p.audio) h += `<audio controls src="${p.audio}"></audio>`;
+  if (p.url) h += `<a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.url)}</a><br>`;
+  if (p.body) h += esc(p.body);
+  return h;
+}
+function renderTray() {
+  const t = S.trayEl; if (!t) return;
+  const pend = S.posts.filter(p => p.status === 'pending').sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+  t.innerHTML = `<div class="tray-head"><h3>📥 À valider (${pend.length})</h3><button class="x" title="Fermer">✕</button></div>
+    ${pend.length > 1 ? '<div class="tray-actions"><button class="btn small blue" id="ok-all">✓ Tout valider</button></div>' : ''}
+    <div class="tray-list">${pend.length ? pend.map(p => `<div class="tray-item" data-id="${esc(p.id)}"><div class="ti-meta"><b>${esc(p.authorName || 'Élève')}</b> · ${TYPES[p.type]?.icon || ''} ${esc(TYPES[p.type]?.label || '')}</div><div class="ti-prev">${previewHTML(p)}</div><div class="ti-btns"><button class="btn small blue" data-t="ok">✓ Valider</button><button class="btn small" data-t="hide">✓ Valider, mais cacher</button><button class="btn small danger" data-t="no">✕ Refuser</button></div></div>`).join('') : '<p class="muted">Rien en attente 🎉</p>'}</div>`;
+  $('.x', t).onclick = toggleTray;
+  const all = $('#ok-all', t); if (all) all.onclick = () => guard(() => S.store.batchUpdate(S.wallId, pend.map(p => p.id), { status: 'approved' }));
+  $$('.tray-item', t).forEach(it => $$('[data-t]', it).forEach(b => b.onclick = async () => {
+    const id = it.dataset.id, a = b.dataset.t;
+    if (a === 'ok') guard(() => S.store.updatePost(S.wallId, id, { status: 'approved' }));
+    if (a === 'hide') guard(() => S.store.updatePost(S.wallId, id, { status: 'approved', hidden: true }));
+    if (a === 'no') guard(() => S.store.deletePost(S.wallId, id));
+  }));
+}
+
+/* ---------------- partage ---------------- */
+function shareLink() { return location.origin + href('w=' + S.wallId); }
+function openShare() {
+  const link = shareLink();
+  const root = document.createElement('div');
+  root.innerHTML = `<div class="share"><p class="muted">Code du mur</p><div class="code-big">${esc(S.wallId)}</div><p class="muted">À saisir sur la page d'accueil, ou lien direct :</p><div class="copy-row"><input readonly value="${esc(link)}" id="sl"><button class="btn primary" id="cp">Copier</button></div><div class="qr" id="qr"></div><button class="btn" id="big">🔍 Agrandir pour projeter</button></div>`;
+  const m = modal({ title: '🔗 Partager avec la classe', body: root, wide: true });
+  if (window.QRCode) new QRCode($('#qr', root), { text: link, width: 300, height: 300, correctLevel: QRCode.CorrectLevel.M });
+  else $('#qr', root).innerHTML = '<p class="muted">QR code indisponible (hors ligne).</p>';
+  $('#cp', root).onclick = async () => { try { await navigator.clipboard.writeText(link); toast('Lien copié ✓', 'ok'); } catch { $('#sl', root).select(); document.execCommand('copy'); toast('Lien copié ✓', 'ok'); } };
+  $('#big', root).onclick = () => { const md = $('.modal', m.root); md.classList.toggle('big-share'); $$('#qr img,#qr canvas', root).forEach(x => x.style.width = md.classList.contains('big-share') ? '420px' : ''); };
+}
+
+/* ---------------- colonnes ---------------- */
+async function addSection() {
+  const t = await promptBox('Nouvelle colonne', 'Titre de la colonne', '', 'Ajouter'); if (!t) return;
+  const sections = [...(S.wall.sections || []), { id: 's' + genId(), title: t }];
+  guard(() => S.store.updateWall(S.wallId, { sections, updatedAt: Date.now() }));
+}
+async function renameSection(id) {
+  const s = (S.wall.sections || []).find(x => x.id === id); if (!s) return;
+  const t = await promptBox('Renommer la colonne', 'Titre de la colonne', s.title, 'Renommer'); if (!t) return;
+  const sections = S.wall.sections.map(x => x.id === id ? { ...x, title: t } : x);
+  guard(() => S.store.updateWall(S.wallId, { sections }));
+}
+
+/* ---------------- réglages ---------------- */
+function openSettings() {
+  const w = clone(S.wall); w.sections = w.sections || []; let tab = 'gen';
+  const root = document.createElement('div');
+  root.innerHTML = `<div class="tabs">${[['gen', 'Général'], ['bg', "Fond d'écran"], ['sec', 'Colonnes'], ['act', 'Actions rapides']].map(([k, l]) => `<button type="button" data-tab="${k}">${l}</button>`).join('')}</div><div class="pane"></div>`;
+  const pane = $('.pane', root);
+  const preview = () => { const b = $('#board'); if (b) b.style.background = wallBgCss(w); };
+  function read() {
+    if (tab === 'gen') { w.title = $('#s-title', pane).value; w.subtitle = $('#s-sub', pane).value; w.format = $('input[name=sfmt]:checked', pane).value; w.allowLikes = $('#s-likes', pane).checked; w.allowComments = $('#s-cm', pane).checked; w.showAuthors = $('#s-auth', pane).checked; }
+    if (tab === 'sec') { $$('.sec-row input', pane).forEach((i, k) => { if (w.sections[k]) w.sections[k].title = i.value; }); }
+  }
+  function draw() {
+    $$('.tabs button', root).forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+    if (tab === 'gen') {
+      pane.innerHTML = `<label class="f">Titre</label><input id="s-title" maxlength="80" value="${esc(w.title)}"><label class="f">Sous-titre</label><input id="s-sub" maxlength="120" value="${esc(w.subtitle || '')}"><label class="f">Format</label>${formatsHTML(w.format || 'columns', 'sfmt')}
+        <label class="chk"><input type="checkbox" id="s-likes" ${w.allowLikes !== false ? 'checked' : ''}> Autoriser les « j'aime » ❤️</label><label class="chk"><input type="checkbox" id="s-cm" ${w.allowComments !== false ? 'checked' : ''}> Autoriser les commentaires 💬</label><label class="chk"><input type="checkbox" id="s-auth" ${w.showAuthors !== false ? 'checked' : ''}> Afficher le prénom des élèves sur leurs publications</label>`;
+    } else if (tab === 'bg') {
+      pane.innerHTML = `<div id="gal"></div><label class="f">Assombrir le fond (meilleure lisibilité) : <span id="dimv">${w.bgDim || 0}</span> %</label><input type="range" id="dim" min="0" max="70" step="5" value="${w.bgDim || 0}"><label class="f">Ou votre propre image</label><div class="row2"><div><label class="btn wide" for="bgf">📁 Choisir une image…</label><input type="file" id="bgf" accept="image/*" hidden></div><div class="muted small">${w.bg === 'custom' ? '✓ Image personnalisée active' : ''}</div></div>`;
+      galleryInto($('#gal', pane), w.bg, v => { w.bg = v; preview(); });
+      $('#dim', pane).oninput = e => { w.bgDim = +e.target.value; $('#dimv', pane).textContent = w.bgDim; preview(); };
+      $('#bgf', pane).onchange = async e => { const f = e.target.files[0]; if (!f) return; w.bgImage = await compressImage(f, 1920, 450000); w.bg = 'custom'; preview(); draw(); };
+    } else if (tab === 'sec') {
+      pane.innerHTML = `<p class="muted small">Utilisées par le format « Colonnes ». Supprimer une colonne déplace ses cartes dans la première.</p>${w.sections.map((s, i) => `<div class="sec-row"><input value="${esc(s.title)}" maxlength="60"><button type="button" class="ct" data-m="up" data-i="${i}" title="Monter">↑</button><button type="button" class="ct" data-m="down" data-i="${i}" title="Descendre">↓</button><button type="button" class="ct" data-m="del" data-i="${i}" title="Supprimer">🗑</button></div>`).join('')}<button type="button" class="btn small" id="sec-add">＋ Ajouter une colonne</button>`;
+      $$('[data-m]', pane).forEach(b => b.onclick = () => { read(); const i = +b.dataset.i, m = b.dataset.m, a = w.sections; if (m === 'up' && i > 0) [a[i - 1], a[i]] = [a[i], a[i - 1]]; if (m === 'down' && i < a.length - 1) [a[i + 1], a[i]] = [a[i], a[i + 1]]; if (m === 'del') { if (a.length <= 1) return toast('Il faut au moins une colonne.', 'err'); a.splice(i, 1); } draw(); });
+      $('#sec-add', pane).onclick = () => { read(); w.sections.push({ id: 's' + genId(), title: 'New column' }); draw(); };
+    } else {
+      const visible = S.posts.filter(p => p.status === 'approved');
+      pane.innerHTML = `<div class="act-list"><button class="btn" id="a-hide">🙈 Cacher toutes les publications</button><button class="btn" id="a-show">👁 Révéler toutes les publications</button><button class="btn" id="a-stud">🧹 Supprimer toutes les publications des élèves</button><button class="btn danger" id="a-del">🗑 Supprimer ce mur définitivement</button></div><p class="muted small">Ces actions s'appliquent immédiatement.</p>`;
+      $('#a-hide', pane).onclick = () => guard(async () => { await S.store.batchUpdate(S.wallId, visible.filter(p => !p.hidden).map(p => p.id), { hidden: true }); toast('Toutes les publications sont cachées.', 'ok'); });
+      $('#a-show', pane).onclick = () => guard(async () => { await S.store.batchUpdate(S.wallId, visible.filter(p => p.hidden).map(p => p.id), { hidden: false }); toast('Toutes les publications sont visibles.', 'ok'); });
+      $('#a-stud', pane).onclick = async () => { const ids = S.posts.filter(p => p.authorUid !== S.wall.ownerUid).map(p => p.id); if (!ids.length) return toast('Aucune publication d’élève.'); if (await confirmBox(`Supprimer les ${ids.length} publications des élèves ?`, 'Supprimer')) guard(() => S.store.batchDelete(S.wallId, ids)); };
+      $('#a-del', pane).onclick = async () => { if (!(await confirmBox(`Supprimer définitivement le mur « ${S.wall.title} » et toutes ses publications ?`, 'Supprimer le mur'))) return; await guard(async () => { await S.store.deleteWall(S.wallId); go(''); }); };
+    }
+  }
+  root.addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) { read(); tab = b.dataset.tab; draw(); } });
+  draw();
+  modal({
+    title: '⚙️ Réglages du mur', body: root, wide: true, onClose: () => updateChrome(true),
+    actions: [{ label: 'Annuler' }, {
+      label: 'Enregistrer', cls: 'primary', onClick: async () => {
+        read(); if (!(w.title || '').trim()) fail('Il faut un titre.');
+        w.sections = w.sections.map(s => ({ ...s, title: s.title.trim() || 'Column' }));
+        const patch = { title: w.title.trim(), subtitle: (w.subtitle || '').trim(), format: w.format, allowComments: !!w.allowComments, allowLikes: !!w.allowLikes, showAuthors: !!w.showAuthors, bg: w.bg, bgImage: w.bg === 'custom' ? (w.bgImage || null) : null, bgDim: +w.bgDim || 0, sections: w.sections, updatedAt: Date.now() };
+        await S.store.updateWall(S.wallId, patch); toast('Réglages enregistrés ✓', 'ok');
+      }
+    }]
+  });
+}
+
+/* ---------------- démarrage ---------------- */
+async function boot() {
+  S.demo = new URLSearchParams(location.search).has('demo');
+  document.documentElement.style.setProperty('--scale', S.scale);
+  if ('ontouchstart' in window || navigator.maxTouchPoints > 0) document.body.classList.add('touch');
+  const mq = matchMedia('(max-width: 700px)');
+  const onMq = e => { S.mobile = e.matches; if (S.wall) renderPosts(); };
+  mq.addEventListener ? mq.addEventListener('change', onMq) : mq.addListener(onMq);
+  window.addEventListener('popstate', route);
+  try { S.store = S.demo ? makeDemoStore() : await makeFirebaseStore(); }
+  catch (e) { console.error(e); return viewFatal(); }
+  let first = true;
+  S.store.onAuth(u => { const changed = first || S.user?.uid !== u?.uid; S.user = u; first = false; if (changed) route(); });
+}
+boot();
+</script>
+</body>
+</html>
