@@ -184,6 +184,15 @@ audio{width:100%;margin:.3em 0;display:block}
 .rte-bar .rte-pop button.none{background:#fff;font-size:.75rem}
 .rte-area{min-height:140px;max-height:45vh;overflow:auto;padding:.8em 1em;outline:none;font-size:1.05rem;line-height:1.5}
 .rte-area:empty::before{content:attr(data-ph);color:#9aa0b4}
+.b-armed{background:#ede9fe;color:#5b21b6}
+.spot-back{position:fixed;inset:0;z-index:400;background:rgba(10,12,28,.8);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:4vh 4vw;animation:spotIn .4s cubic-bezier(.2,1.4,.4,1)}
+@keyframes spotIn{from{opacity:0;transform:scale(.85)}}
+.card.spot{width:min(1150px,92vw);height:min(68vh,720px);font-size:2rem;border-width:clamp(8px,1.2vw,14px);animation:hlp 2.2s ease-in-out infinite}
+.card.spot .card-body{justify-content:center;padding:.4em .8em}
+.spot-actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.spot-actions .btn{font-size:1.15rem;padding:.8em 1.7em}
+.spot-actions .btn:disabled{opacity:.6;cursor:default}
+.spot-note{color:#fff;font-weight:800;opacity:.85}
 .vid{position:relative;padding-top:56.25%;border-radius:12px;overflow:hidden;background:#000}
 .vid iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .emb-bar{display:flex;align-items:center;gap:6px;font-weight:800;margin-bottom:.5em}
@@ -794,6 +803,7 @@ function cleanup() {
   S.unsubs.forEach(u => { try { u && u(); } catch { } }); S.unsubs = [];
   S.wall = null; S.posts = []; S.postsLoaded = false; S.isOwner = false; S.preview = false; S.els = new Map(); S.lists = {}; S.ckey = null;
   if (S.trayEl) { S.trayEl.remove(); S.trayEl = null; }
+  closeSpot();
   $$('.modal-back,.lightbox').forEach(m => m.remove());
 }
 
@@ -999,10 +1009,10 @@ function onWall(w) {
   S.wall = w;
   S.isOwner = !!S.user && w.ownerUid === S.user.uid;
   if (first) {
-    S.unsubs.push(S.store.watchPosts(S.wallId, { owner: S.isOwner, uid: S.user.uid }, list => { S.posts = list; S.postsLoaded = true; renderPosts(); renderTray(); }));
+    S.unsubs.push(S.store.watchPosts(S.wallId, { owner: S.isOwner, uid: S.user.uid }, list => { S.posts = list; S.postsLoaded = true; renderPosts(); renderTray(); checkSpot(); }));
     if (S.isOwner) S.store.getTeacher(S.user.uid).then(t => { S.teacher = { games: [], ...(t || {}) }; }).catch(() => { });
   }
-  updateChrome(); renderPosts();
+  updateChrome(); renderPosts(); checkSpot();
 }
 function updateChrome(forceBg) {
   const w = S.wall; if (!w || !$('#board')) return;
@@ -1120,7 +1130,7 @@ function cardEl(p) {
 }
 function bodySig(p) {
   let w = null; if (p.widget) { w = { ...p.widget }; ['running', 'endsAt', 'remaining', 'startedAt', 'acc'].forEach(k => delete w[k]); }
-  return JSON.stringify([p.type, p.title, p.body, p.html, p.preview, p.color, p.size, p.fs, p.hl, p.icon, p.pulse, p.url, p.yt, (p.img || '').length, (p.img || '').slice(-32), (p.audio || '').length, w, p.hidden, p.status, teacherMode(), isAuthor(p), effFormat()]);
+  return JSON.stringify([p.type, p.title, p.body, p.html, p.preview, p.color, p.size, p.fs, p.hl, p.icon, p.pulse, p.url, p.yt, (p.img || '').length, (p.img || '').slice(-32), (p.audio || '').length, w, p.hidden, p.armed, p.trigger, p.status, teacherMode(), isAuthor(p), effFormat()]);
 }
 function footSig(p) { const w = S.wall; return JSON.stringify([Object.keys(p.likes || {}).length, !!(p.likes || {})[S.user?.uid], p.cc || 0, w.allowLikes, w.allowComments, w.showAuthors, teacherMode(), p.authorName]); }
 function fillCard(el, p) {
@@ -1129,9 +1139,9 @@ function fillCard(el, p) {
   el.style.setProperty('--cbg', COLORS[p.color] || COLORS.white);
   el.style.setProperty('--hl', HL[p.hl] || HL.red);
   el.style.setProperty('--fs', p.fs || 1);
-  const badges = []; if (p.hidden && tm) badges.push('<span class="badge b-hidden">🙈 Caché</span>'); if (p.status === 'pending') badges.push('<span class="badge b-pend">⏳ En attente</span>');
+  const badges = []; if (p.armed && tm) badges.push(`<span class="badge b-armed" title="Apparaîtra à la fin du minuteur">⏳ Fin de « ${esc(timerName(p.trigger?.timerId))} »</span>`); else if (p.hidden && tm) badges.push('<span class="badge b-hidden">🙈 Caché</span>'); if (p.status === 'pending') badges.push('<span class="badge b-pend">⏳ En attente</span>');
   let tools = '';
-  if (tm) tools = `<button class="ct" data-a="edit" title="Modifier">✏️</button><button class="ct" data-a="hide" title="${p.hidden ? 'Révéler aux élèves' : 'Cacher aux élèves'}">${p.hidden ? '👁' : '🙈'}</button><button class="ct" data-a="del" title="Supprimer">🗑</button>`;
+  if (tm) tools = (t === 'highlight' ? '<button class="ct" data-a="spot" title="Afficher en grand sur tous les écrans">📣</button>' : '') + `<button class="ct" data-a="edit" title="Modifier">✏️</button><button class="ct" data-a="hide" title="${p.hidden ? 'Révéler aux élèves' : 'Cacher aux élèves'}">${p.hidden ? '👁' : '🙈'}</button><button class="ct" data-a="del" title="Supprimer">🗑</button>`;
   else if (mine) tools = `<button class="ct" data-a="del" title="Supprimer">🗑</button>`;
   const head = (tm || badges.length || tools) ? `<div class="card-head">${tm ? '<span class="drag" title="Déplacer">⠿</span>' : ''}${badges.join('')}<div class="card-tools">${tools}</div></div>` : '';
   const fmt = effFormat(), free = fmt === 'free';
@@ -1162,8 +1172,8 @@ function bodyHTML(p, tm) {
     case 'link': return linkCardHTML(p.url, p.preview, p.title) + B;
     case 'youtube': return T + `<div class="vid"><iframe src="https://www.youtube-nocookie.com/embed/${esc(p.yt)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen loading="lazy"></iframe></div>`;
     case 'clock': return (p.title ? `<div class="w-title">${esc(p.title)}</div>` : '') + `<div class="w-digits" data-tick="clock"></div>` + (w.showDate !== false ? `<div class="w-date" data-tick="date"></div>` : '');
-    case 'timer': return (p.title ? `<div class="w-title">${esc(p.title)}</div>` : '') + `<div class="w-digits" data-tick="timer"></div><div class="w-bar"><i></i></div>` + (S.isOwner ? `<div class="w-ctrl"><button class="wb big" data-act="toggle">▶</button><button class="wb" data-act="reset" title="Remettre à zéro">↺</button>${[1, 2, 3, 5, 10].map(m => `<button class="wb" data-act="preset" data-m="${m}">${m}′</button>`).join('')}<button class="wb" data-act="plus">+1′</button></div>` : '');
-    case 'stopwatch': return (p.title ? `<div class="w-title">${esc(p.title)}</div>` : '') + `<div class="w-digits" data-tick="stop"></div>` + (S.isOwner ? `<div class="w-ctrl"><button class="wb big" data-act="toggle">▶</button><button class="wb" data-act="reset" title="Remettre à zéro">↺</button></div>` : '');
+    case 'timer': return (p.title ? `<div class="w-title">${esc(p.title)}</div>` : '') + `<div class="w-digits" data-tick="timer"></div><div class="w-bar"><i></i></div>` + (teacherMode() ? `<div class="w-ctrl"><button class="wb big" data-act="toggle">▶</button><button class="wb" data-act="reset" title="Remettre à zéro">↺</button>${[1, 2, 3, 5, 10].map(m => `<button class="wb" data-act="preset" data-m="${m}">${m}′</button>`).join('')}<button class="wb" data-act="plus">+1′</button></div>` : '');
+    case 'stopwatch': return (p.title ? `<div class="w-title">${esc(p.title)}</div>` : '') + `<div class="w-digits" data-tick="stop"></div>` + (teacherMode() ? `<div class="w-ctrl"><button class="wb big" data-act="toggle">▶</button><button class="wb" data-act="reset" title="Remettre à zéro">↺</button></div>` : '');
     case 'quizlet': return emb('🃏', 'Quizlet', `https://quizlet.com/${encodeURIComponent(w.qid)}/${encodeURIComponent(w.mode || 'flashcards')}/embed`);
     case 'embed': return emb('🎮', 'Jeu', w.url || p.url);
   }
@@ -1188,6 +1198,7 @@ async function cardAction(p, a, el) {
   if (a === 'edit') return openEditor(p);
   if (a === 'hide') { const v = !p.hidden; p.hidden = v; el._sig = null; cardEl(p); return guard(() => S.store.updatePost(S.wallId, p.id, { hidden: v })); }
   if (a === 'del') { if (await confirmBox('Supprimer cette publication ?', 'Supprimer')) guard(() => S.store.deletePost(S.wallId, p.id)); return; }
+  if (a === 'spot') return showSpot(p);
   if (a === 'fs') { const t = $('.emb', el) || el; (t.requestFullscreen || t.webkitRequestFullscreen)?.call(t); }
 }
 function bindFreeDrag(el) {
@@ -1265,8 +1276,8 @@ function widgetAct(p, act, m) {
   const w = p.widget || {}, now = Date.now(); let patch = {};
   if (p.type === 'timer') {
     const rem = w.running ? Math.max(0, w.endsAt - now) : (w.remaining ?? w.duration);
-    if (act === 'toggle') { if (w.running) patch = { 'widget.running': false, 'widget.remaining': rem }; else { const r = rem > 0 ? rem : w.duration; patch = { 'widget.running': true, 'widget.endsAt': now + r, 'widget.remaining': r }; } }
-    if (act === 'reset') patch = { 'widget.running': false, 'widget.remaining': w.duration };
+    if (act === 'toggle') { if (w.running) patch = { 'widget.running': false, 'widget.remaining': rem }; else { const r = rem > 0 ? rem : w.duration; if (rem <= 0 || rem >= w.duration) rearmLinked(p); patch = { 'widget.running': true, 'widget.endsAt': now + r, 'widget.remaining': r }; } }
+    if (act === 'reset') { patch = { 'widget.running': false, 'widget.remaining': w.duration }; rearmLinked(p); }
     if (act === 'preset') patch = { 'widget.running': false, 'widget.duration': m * 60000, 'widget.remaining': m * 60000 };
     if (act === 'plus') { patch = w.running ? { 'widget.endsAt': w.endsAt + 60000 } : { 'widget.remaining': rem + 60000 }; patch['widget.duration'] = Math.max(w.duration || 0, rem + 60000); }
   } else if (p.type === 'stopwatch') {
@@ -1289,7 +1300,7 @@ function tick() {
       const bar = $('.w-bar i', el); if (bar) bar.style.width = (Math.min(1, frac) * 100).toFixed(1) + '%';
       el.classList.toggle('warn', rem > 0 && frac <= .2); el.classList.toggle('done', rem === 0 && (w.duration || 0) > 0);
       set('[data-act="toggle"]', w.running ? '⏸' : '▶');
-      if (w.running && rem === 0 && S.isOwner && el._doneAt !== w.endsAt) { el._doneAt = w.endsAt; beep(); const patch = { 'widget.running': false, 'widget.remaining': 0 }; applyLocal(p, patch); guard(() => S.store.updatePost(S.wallId, p.id, patch)); }
+      if (w.running && rem === 0 && S.isOwner && el._doneAt !== w.endsAt) { el._doneAt = w.endsAt; beep(); const patch = { 'widget.running': false, 'widget.remaining': 0 }; applyLocal(p, patch); guard(() => S.store.updatePost(S.wallId, p.id, patch)); fireTimerEnd(p); }
     } else if (p.type === 'stopwatch') {
       set('[data-tick="stop"]', fmtStop((w.acc || 0) + (w.running ? now - (w.startedAt || now) : 0)));
       set('[data-act="toggle"]', w.running ? '⏸' : '▶');
@@ -1297,6 +1308,68 @@ function tick() {
   }
 }
 setInterval(tick, 200);
+
+/* ---------------- encadré lié à un minuteur + message en grand ---------------- */
+function timerName(id) { const t = S.posts.find(x => x.id === id); return t ? (t.title || 'Minuteur ' + fmtTimer(t.widget?.duration || 0)) : 'minuteur supprimé'; }
+function triggerFields(d) {
+  const timers = S.posts.filter(x => x.type === 'timer'), cur = d.trigger?.timerId || '';
+  return `<label class="f">Apparition</label><select name="trig"><option value="">Tout de suite</option>${timers.map(t => `<option value="${esc(t.id)}" ${cur === t.id ? 'selected' : ''}>À la fin du minuteur « ${esc(timerName(t.id))} »</option>`).join('')}</select>`
+    + (timers.length ? '' : '<p class="muted small">Ajoutez d’abord un minuteur sur ce mur pour pouvoir y lier l’encadré.</p>')
+    + `<label class="chk"><input type="checkbox" name="spot" ${d.spot !== false ? 'checked' : ''}> 📣 À la fin du minuteur, l'afficher en grand sur tous les écrans</label>`
+    + `<div class="row2"><div><label class="f">Les élèves peuvent fermer le message en grand</label><select name="spotDelay">${[[5, 'après 5 secondes'], [10, 'après 10 secondes'], [20, 'après 20 secondes'], [30, 'après 30 secondes'], [-1, 'jamais : c’est moi qui le ferme']].map(([v, l]) => `<option value="${v}" ${+(d.spotDelay ?? 5) === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div></div>`;
+}
+function rearmLinked(timer) {
+  const linked = S.posts.filter(h => h.type === 'highlight' && h.trigger?.timerId === timer.id && !h.armed);
+  if (!linked.length) return;
+  linked.forEach(h => applyLocal(h, { hidden: true, armed: true }));
+  guard(() => S.store.batchUpdate(S.wallId, linked.map(h => h.id), { hidden: true, armed: true }));
+  if (linked.some(h => h.id === S.wall?.spotlight?.postId)) guard(() => S.store.updateWall(S.wallId, { spotlight: null }));
+  renderPosts();
+}
+function fireTimerEnd(timer) {
+  const linked = S.posts.filter(h => h.type === 'highlight' && h.trigger?.timerId === timer.id && h.armed);
+  if (!linked.length) return;
+  linked.forEach(h => applyLocal(h, { hidden: false, armed: false }));
+  guard(() => S.store.batchUpdate(S.wallId, linked.map(h => h.id), { hidden: false, armed: false }));
+  const big = linked.find(h => h.spot !== false);
+  if (big) showSpot(big); else renderPosts();
+}
+function showSpot(p) {
+  if (p.hidden || p.armed) { applyLocal(p, { hidden: false, armed: false }); guard(() => S.store.updatePost(S.wallId, p.id, { hidden: false, armed: false })); }
+  const spotlight = { postId: p.id, at: Date.now(), delay: +(p.spotDelay ?? 5) };
+  S.wall.spotlight = spotlight; checkSpot(); renderPosts();
+  guard(() => S.store.updateWall(S.wallId, { spotlight }));
+}
+function closeSpot() { if (S.spotEl) { clearInterval(S.spotEl._iv); S.spotEl.remove(); S.spotEl = null; } }
+function checkSpot() {
+  const sp = S.wall?.spotlight;
+  if (!sp || !sp.postId) return closeSpot();
+  if (S.spotEl && S.spotEl._at === sp.at) return;
+  const p = S.posts.find(x => x.id === sp.postId);
+  if (!p || (!S.isOwner && (p.hidden || S.spotDismissed === sp.at))) return;
+  closeSpot();
+  const back = document.createElement('div'); back.className = 'spot-back'; back._at = sp.at;
+  back.innerHTML = `<article class="card t-highlight hl fixed-h spot ${p.color === 'dark' ? 'dark' : ''}"><div class="card-body">${bodyHTML(p, false)}</div></article><div class="spot-actions"></div>`;
+  const card = $('.card', back); card._post = p;
+  card.style.setProperty('--hl', HL[p.hl] || HL.red); card.style.setProperty('--cbg', COLORS[p.color] || COLORS.white);
+  const act = $('.spot-actions', back);
+  if (S.isOwner) {
+    act.innerHTML = '<button class="btn primary" id="sp-all">✕ Fermer pour tous</button>';
+    $('#sp-all', act).onclick = () => { S.wall.spotlight = null; closeSpot(); guard(() => S.store.updateWall(S.wallId, { spotlight: null })); };
+  } else if (sp.delay < 0) {
+    act.innerHTML = '<span class="spot-note">Le professeur fermera ce message.</span>';
+  } else {
+    act.innerHTML = '<button class="btn primary" id="sp-ok" disabled></button>';
+    const b = $('#sp-ok', act), end = Date.now() + sp.delay * 1000;
+    const upd = () => { const r = Math.ceil((end - Date.now()) / 1000); if (r > 0) { b.textContent = `J'ai lu ✓ (${r})`; b.disabled = true; } else { b.textContent = "J'ai lu ✓"; b.disabled = false; clearInterval(back._iv); } };
+    upd(); back._iv = setInterval(upd, 250);
+    b.onclick = () => { S.spotDismissed = sp.at; closeSpot(); };
+  }
+  document.body.appendChild(back); S.spotEl = back;
+  fitCard(card); requestAnimationFrame(() => fitCard(card));
+  if (!S.isOwner) beep();
+}
+window.addEventListener('resize', () => { const c = S.spotEl && $('.card', S.spotEl); if (c) fitCard(c); });
 
 /* ---------------- éditeur de publication ---------------- */
 function fieldsHTML(type, d, owner) {
@@ -1309,7 +1382,7 @@ function fieldsHTML(type, d, owner) {
   const row = (...a) => { const x = a.filter(Boolean); return x.length ? `<div class="row2">${x.join('')}</div>` : ''; };
   switch (type) {
     case 'text': return T() + rteHTML(d, 'Écris ici… (colle un lien seul pour créer une vignette)') + row(fs, size) + colors + sec;
-    case 'highlight': return T('Ex : Homework for Monday!') + rteHTML(d, 'Message important…') + `<label class="f">Couleur du cadre</label><div class="swatches">${Object.entries(HL).map(([k, c]) => `<label class="sw" style="--c:${c}"><input type="radio" name="hl" value="${k}" ${(d.hl || 'red') === k ? 'checked' : ''}><span></span></label>`).join('')}</div>` + row(`<div><label class="f">Icône</label><select name="icon">${['', '⚠️', '⭐', '📌', '❗', '💡', '🎯', '📣', '📅', '✅'].map(i => `<option value="${i}" ${(d.icon || '') === i ? 'selected' : ''}>${i || 'Aucune'}</option>`).join('')}</select></div>`, fs) + row(size) + `<label class="chk"><input type="checkbox" name="pulse" ${d.pulse ? 'checked' : ''}> Faire pulser le cadre pour attirer l'attention</label>` + colors + sec;
+    case 'highlight': return T('Ex : Homework for Monday!') + rteHTML(d, 'Message important…') + `<label class="f">Couleur du cadre</label><div class="swatches">${Object.entries(HL).map(([k, c]) => `<label class="sw" style="--c:${c}"><input type="radio" name="hl" value="${k}" ${(d.hl || 'red') === k ? 'checked' : ''}><span></span></label>`).join('')}</div>` + row(`<div><label class="f">Icône</label><select name="icon">${['', '⚠️', '⭐', '📌', '❗', '💡', '🎯', '📣', '📅', '✅'].map(i => `<option value="${i}" ${(d.icon || '') === i ? 'selected' : ''}>${i || 'Aucune'}</option>`).join('')}</select></div>`, fs) + row(size) + `<label class="chk"><input type="checkbox" name="pulse" ${d.pulse ? 'checked' : ''}> Faire pulser le cadre pour attirer l'attention</label>` + triggerFields(d) + colors + sec;
     case 'image': return `<div class="drop" id="img-drop"><div id="img-prev">${d.img ? `<img src="${d.img}" alt="">` : '🖼️<br>Choisir une photo<br><small>ou coller une image (⌘V)</small>'}</div><input type="file" accept="image/*" id="img-file" hidden></div>` + T('Légende (facultatif)') + B('Description (facultatif)') + row(size) + colors + sec;
     case 'audio': return `<div class="rec"><button type="button" class="btn primary" id="rec-btn">⏺ Enregistrer</button><span id="rec-t" class="muted"></span><label class="btn" for="aud-file">📁 Choisir un fichier</label><input type="file" accept="audio/*" id="aud-file" hidden></div><div id="aud-prev" style="margin-top:10px">${d.audio ? `<audio controls src="${d.audio}"></audio>` : ''}</div><p class="muted small">90 secondes maximum.</p>` + T() + B('Description (facultatif)') + colors + sec;
     case 'link': return `<label class="f">Adresse du lien</label><input name="url" type="url" inputmode="url" placeholder="https://…" value="${esc(d.url || '')}"><div id="pv-box"></div>` + T('Titre (facultatif : sinon celui du site)') + B('Description (facultatif)') + row(size) + colors + sec;
@@ -1407,7 +1480,15 @@ async function savePost(type, d, media, post, opts) {
   if (S.wall.format === 'columns') base.sectionId = d.sectionId || opts.sectionId || (S.wall.sections || [])[0]?.id || 's1';
   switch (type) {
     case 'text': if (!base.title && !base.body) fail('Écris quelque chose 🙂'); base.html = d.html || null; break;
-    case 'highlight': if (!base.title && !base.body) fail('Écris le message à mettre en valeur.'); base.html = d.html || null; Object.assign(base, { hl: d.hl || 'red', icon: d.icon || '', pulse: !!d.pulse }); break;
+    case 'highlight': {
+      if (!base.title && !base.body) fail('Écris le message à mettre en valeur.');
+      base.html = d.html || null; Object.assign(base, { hl: d.hl || 'red', icon: d.icon || '', pulse: !!d.pulse });
+      const trig = d.trig || '';
+      Object.assign(base, { trigger: trig ? { timerId: trig } : null, spot: !!d.spot, spotDelay: +(d.spotDelay ?? 5) });
+      if (trig && (!editing || post.trigger?.timerId !== trig)) Object.assign(base, { hidden: true, armed: true });
+      if (!trig && editing && post.armed) Object.assign(base, { hidden: false, armed: false });
+      break;
+    }
     case 'image': if (!media.img) fail('Choisis une image.'); base.img = media.img; break;
     case 'audio': if (!media.audio) fail("Enregistre ou choisis un son."); base.audio = media.audio; break;
     case 'link': { let u = (d.url || '').trim(); if (!u) fail('Colle une adresse.'); if (!/^https?:\/\//i.test(u)) u = 'https://' + u; try { new URL(u); } catch { fail('Adresse invalide.'); } base.url = u; base.preview = (d.previewFor === u && d.preview) ? d.preview : (await getPreview(u)) || null; break; }
@@ -1424,7 +1505,7 @@ async function savePost(type, d, media, post, opts) {
   else {
     if (!owner && S.wall.studentMode === 'closed') fail('Les publications sont fermées pour le moment.');
     const now = Date.now();
-    const full = { ...base, authorUid: S.user.uid, authorName: getName() || 'Élève', status: owner ? 'approved' : (S.wall.studentMode === 'review' ? 'pending' : 'approved'), hidden: false, likes: {}, cc: 0, createdAt: now, order: now };
+    const full = { ...base, authorUid: S.user.uid, authorName: getName() || 'Élève', status: owner ? 'approved' : (S.wall.studentMode === 'review' ? 'pending' : 'approved'), hidden: !!base.hidden, likes: {}, cc: 0, createdAt: now, order: now };
     if ((S.wall.format || 'columns') === 'free') {
       const sc = $('#scroll'), s = S.scale, isW = !!TYPES[type].widget;
       full.w = ['quizlet', 'embed'].includes(type) ? 520 : type === 'youtube' ? 420 : isW ? 340 : 300;
