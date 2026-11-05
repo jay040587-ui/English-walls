@@ -1522,9 +1522,10 @@ async function savePost(type, d, media, post, opts) {
 
 /* ---------------- commentaires ---------------- */
 function openComments(p) {
-  const canC = S.isOwner || S.wall.allowComments !== false;
+  const commentsOpen = () => S.isOwner || (S.wall.allowComments !== false && S.wall.studentMode !== 'closed');
+  const canC = commentsOpen();
   const root = document.createElement('div');
-  root.innerHTML = `<div class="cm-list"><p class="muted">Chargement…</p></div>${canC ? `<form class="cm-form"><input name="t" maxlength="500" placeholder="Écris un commentaire…" autocomplete="off"><button class="btn primary">Envoyer</button></form>` : '<p class="muted">Les commentaires sont fermés.</p>'}`;
+  root.innerHTML = `<div class="cm-list"><p class="muted">Chargement…</p></div>${canC ? `<form class="cm-form"><input name="t" maxlength="500" placeholder="Écris un commentaire…" autocomplete="off"><button class="btn primary">Envoyer</button></form>` : '<p class="muted">🔒 Les commentaires sont fermés pour le moment.</p>'}`;
   let unsub = null;
   modal({ title: '💬 Commentaires', body: root, onClose: () => unsub && unsub() });
   unsub = S.store.watchComments(S.wallId, p.id, list => {
@@ -1535,7 +1536,7 @@ function openComments(p) {
     L.scrollTop = L.scrollHeight;
   });
   const f = $('.cm-form', root);
-  if (f) { setTimeout(() => f.t.focus(), 50); f.onsubmit = e => { e.preventDefault(); const t = f.t.value.trim(); if (!t) return; f.t.value = ''; guard(() => S.store.addComment(S.wallId, p.id, { text: t, authorUid: S.user.uid, authorName: getName() || 'Élève', createdAt: Date.now() })); }; }
+  if (f) { setTimeout(() => f.t.focus(), 50); f.onsubmit = e => { e.preventDefault(); if (!commentsOpen()) return toast('🔒 Les commentaires sont fermés pour le moment.', 'err'); const t = f.t.value.trim(); if (!t) return; f.t.value = ''; guard(() => S.store.addComment(S.wallId, p.id, { text: t, authorUid: S.user.uid, authorName: getName() || 'Élève', createdAt: Date.now() })); }; }
 }
 
 /* ---------------- modération ---------------- */
