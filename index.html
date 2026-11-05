@@ -8,7 +8,7 @@
 <title>English Walls</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Bangers&family=Caveat:wght@400;700&family=Fredoka:wght@500;600;700&family=Merriweather:wght@400;700&family=Nunito:wght@400;600;700;800&family=Patrick+Hand&family=Permanent+Marker&family=Special+Elite&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
@@ -155,11 +155,35 @@ label.chk input{width:20px;height:20px;accent-color:var(--accent);flex:none}
 .card.pulse{animation:hlp 2.2s ease-in-out infinite}
 @keyframes hlp{50%{box-shadow:0 0 0 14px color-mix(in srgb,var(--hl) 30%,transparent),0 10px 30px rgba(0,0,0,.28)}}
 audio{width:100%;margin:.3em 0;display:block}
-.plink{display:flex;align-items:center;gap:.7em;padding:.7em;border-radius:12px;background:rgba(0,0,0,.05);text-decoration:none;color:inherit;margin-bottom:.4em}
-.plink img{width:32px;height:32px;border-radius:8px;flex:none}
-.plink span{flex:1;min-width:0;display:flex;flex-direction:column}
-.plink b{overflow-wrap:anywhere}.plink small{opacity:.65}
+.plink{display:block;border-radius:12px;background:rgba(0,0,0,.05);text-decoration:none;color:inherit;margin-bottom:.4em;overflow:hidden}
+.plink:hover{background:rgba(0,0,0,.08)}
+.pv-img{display:block;width:100%;aspect-ratio:1.91/1;object-fit:cover;background:rgba(0,0,0,.06)}
+.pv-row{display:flex;align-items:center;gap:.7em;padding:.7em}
+.pv-fav{width:28px;height:28px;border-radius:7px;flex:none}
+.pv-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:.15em}
+.pv-t b{overflow-wrap:anywhere;line-height:1.25}
+.pv-d{opacity:.75;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;line-height:1.35}
+.pv-u{opacity:.55}
 .plink i{font-style:normal;font-weight:800}
+#pv-box{margin-top:10px}#pv-box a{pointer-events:none}#pv-box .pv-img{max-height:200px}
+.txt.rich{white-space:normal}
+.rich ul,.rich ol{margin:.2em 0;padding-left:1.4em}
+.rte{border:1.5px solid #d6dae5;border-radius:12px;background:#fff}
+.rte:focus-within{border-color:#6c8cff;box-shadow:0 0 0 3px rgba(108,140,255,.2)}
+.rte-bar{display:flex;flex-wrap:wrap;gap:3px;padding:6px;border-bottom:1px solid #eef0f5;align-items:center;background:#fafbfd;border-radius:12px 12px 0 0}
+.rte-bar select{width:auto;padding:.35em .5em;border-radius:8px;font-size:.88rem;max-width:170px}
+.rte-bar button{border:0;background:transparent;border-radius:8px;min-width:34px;height:34px;font-size:1rem;display:inline-flex;align-items:center;justify-content:center;color:#1f2335;padding:0 .3em}
+.rte-bar button:hover{background:#eef1f8}.rte-bar button.on{background:#1f2335;color:#fff}
+.rte-bar svg{width:18px;height:18px}
+.rte-bar .sep{width:1px;height:24px;background:#e2e5ee;margin:0 3px}
+.rte-pw{position:relative;display:inline-flex}
+.rte-pop{position:absolute;top:100%;left:0;z-index:10;background:#fff;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.22);padding:8px;display:grid;grid-template-columns:repeat(5,30px);gap:6px}
+.rte-pop[hidden]{display:none}
+.rte-bar .rte-pop button{width:30px;height:30px;min-width:30px;border-radius:50%;background:var(--c);border:2px solid rgba(0,0,0,.12)}
+.rte-bar .rte-pop button:hover{background:var(--c);transform:scale(1.12)}
+.rte-bar .rte-pop button.none{background:#fff;font-size:.75rem}
+.rte-area{min-height:140px;max-height:45vh;overflow:auto;padding:.8em 1em;outline:none;font-size:1.05rem;line-height:1.5}
+.rte-area:empty::before{content:attr(data-ph);color:#9aa0b4}
 .vid{position:relative;padding-top:56.25%;border-radius:12px;overflow:hidden;background:#000}
 .vid iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .emb-bar{display:flex;align-items:center;gap:6px;font-weight:800;margin-bottom:.5em}
@@ -303,11 +327,11 @@ function shortUrl(u, max = 42) {
   } catch { return u.length > max ? u.slice(0, max - 1) + '…' : u; }
 }
 const URL_RE = /\b(?:https?:\/\/|www\.)[^\s<>"']+/gi;
+function trimUrl(u) { while (/[.,!?;:\]}»)]$/.test(u)) { if (u.endsWith(')') && (u.split('(').length - 1) >= (u.split(')').length - 1)) break; u = u.slice(0, -1); } return u; }
 function linkify(text) {
   const s = String(text ?? ''); let out = '', last = 0;
   for (const m of s.matchAll(URL_RE)) {
-    let u = m[0];
-    while (/[.,!?;:\]}»)]$/.test(u)) { if (u.endsWith(')') && (u.split('(').length - 1) >= (u.split(')').length - 1)) break; u = u.slice(0, -1); }
+    const u = trimUrl(m[0]);
     const full = /^www\./i.test(u) ? 'https://' + u : u;
     out += esc(s.slice(last, m.index)) + `<a href="${esc(full)}" target="_blank" rel="noopener" title="${esc(full)}">${esc(shortUrl(full))}</a>`;
     last = m.index + u.length;
@@ -336,6 +360,154 @@ const ytId = u => (String(u || '').match(/(?:youtu\.be\/|v=|embed\/|shorts\/|liv
 const quizletId = u => (String(u || '').match(/quizlet\.com\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?(\d{5,})/i) || [])[1] || null;
 function embedUrl(raw) { let u = String(raw || '').trim(); const m = u.match(/src=["']([^"']+)["']/i); if (m) u = m[1]; if (u && !/^https?:\/\//i.test(u)) u = 'https://' + u; try { new URL(u); return u; } catch { return null; } }
 const clean = o => JSON.parse(JSON.stringify(o));
+
+/* ---------------- texte enrichi : polices et nettoyage de sécurité ---------------- */
+const FONTS = [['Nunito', 'Police par défaut'], ['Andika', 'Andika (lecture facile)'], ['Fredoka', 'Fredoka (titres)'], ['Patrick Hand', 'Patrick Hand (écriture)'], ['Caveat', 'Caveat (manuscrite)'], ['Permanent Marker', 'Permanent Marker (feutre)'], ['Bangers', 'Bangers (BD)'], ['Merriweather', 'Merriweather (classique)'], ['Special Elite', 'Special Elite (machine à écrire)']];
+const TEXT_COLORS = ['#1f2335', '#e11d48', '#ea580c', '#d97706', '#16a34a', '#0891b2', '#2563eb', '#7c3aed', '#db2777', '#ffffff'];
+const HILITES = ['#fde68a', '#fed7aa', '#bbf7d0', '#bae6fd', '#ddd6fe', '#fbcfe8', '#fecaca', '#e5e7eb', '#1f2335'];
+const FONT_MAP = new Map(FONTS.map(([f]) => [f.toLowerCase(), f]));
+const SIZE_KW = { 'xx-small': .6, 'x-small': .75, small: .875, medium: 1, large: 1.2, 'x-large': 1.5, 'xx-large': 2, 'xxx-large': 2.6, smaller: .85, larger: 1.2 };
+const SIZE_ATTR = { 1: .75, 2: .875, 3: 1, 4: 1.2, 5: 1.5, 6: 2, 7: 2.6 };
+const COLOR_RE = /^(#[0-9a-f]{3,8}|rgba?\(\s*[\d.]+%?\s*,\s*[\d.]+%?\s*,\s*[\d.]+%?\s*(,\s*[\d.]+\s*)?\))$/i;
+const KEEP = { b: 'b', strong: 'b', i: 'i', em: 'i', u: 'u', s: 's', strike: 's', del: 's', br: 'br', div: 'div', p: 'div', span: 'span', font: 'span', mark: 'span', ul: 'ul', ol: 'ol', li: 'li', a: 'a', h1: 'div', h2: 'div', h3: 'div', h4: 'div', blockquote: 'div' };
+const DROP = new Set(['script', 'style', 'iframe', 'object', 'embed', 'svg', 'math', 'template', 'noscript', 'link', 'meta', 'img', 'video', 'audio', 'input', 'button', 'select', 'textarea', 'form', 'head', 'title', 'canvas']);
+function cleanSize(v) {
+  v = String(v || '').trim().toLowerCase(); let em = null;
+  if (SIZE_KW[v]) em = SIZE_KW[v];
+  else { const m = v.match(/^([\d.]+)(em|rem|px|pt|%)$/); if (m) { const n = +m[1]; em = m[2] === 'px' ? n / 16 : m[2] === 'pt' ? n / 12 : m[2] === '%' ? n / 100 : n; } }
+  if (!em || !isFinite(em)) return null;
+  em = Math.min(4, Math.max(.5, em));
+  return Math.abs(em - 1) < .01 ? null : +em.toFixed(3) + 'em';
+}
+function cleanFont(v) { const f = FONT_MAP.get(String(v || '').split(',')[0].replace(/["']/g, '').trim().toLowerCase()); return f ? `'${f}'` : null; }
+function appendLinked(dst, s, inA) {
+  if (inA) { dst.appendChild(document.createTextNode(s)); return; }
+  let last = 0;
+  for (const m of s.matchAll(URL_RE)) {
+    const u = trimUrl(m[0]), full = /^www\./i.test(u) ? 'https://' + u : u;
+    dst.appendChild(document.createTextNode(s.slice(last, m.index)));
+    const a = document.createElement('a'); a.href = full; a.target = '_blank'; a.rel = 'noopener'; a.title = full; a.textContent = shortUrl(full); dst.appendChild(a);
+    last = m.index + u.length;
+  }
+  dst.appendChild(document.createTextNode(s.slice(last)));
+}
+function walkClean(src, dst, inA) {
+  for (const n of src.childNodes) {
+    if (n.nodeType === 3) { appendLinked(dst, n.nodeValue, inA); continue; }
+    if (n.nodeType !== 1) continue;
+    const tag = n.tagName.toLowerCase(); if (DROP.has(tag)) continue;
+    const to = KEEP[tag];
+    if (!to) { walkClean(n, dst, inA); continue; }
+    if (to === 'br') { dst.appendChild(document.createElement('br')); continue; }
+    const el = document.createElement(to);
+    if (to === 'a') {
+      const href = (n.getAttribute('href') || '').trim();
+      if (inA || !/^https?:\/\//i.test(href)) { walkClean(n, dst, inA); continue; }
+      el.href = href; el.target = '_blank'; el.rel = 'noopener'; el.title = href;
+      const txt = n.textContent.trim();
+      if (!txt || txt === href || txt.length > 60) { el.textContent = shortUrl(href); dst.appendChild(el); continue; }
+    }
+    const st = n.style || {}, set = (k, v) => { if (v) el.style.setProperty(k, v); };
+    set('color', COLOR_RE.test(st.color || '') ? st.color : null);
+    set('background-color', COLOR_RE.test(st.backgroundColor || '') ? st.backgroundColor : null);
+    set('font-family', cleanFont(st.fontFamily));
+    set('font-size', cleanSize(st.fontSize));
+    if (/^(bold|bolder|[6-9]00)$/.test(st.fontWeight || '')) el.style.fontWeight = 'bold';
+    if (st.fontStyle === 'italic') el.style.fontStyle = 'italic';
+    const td = (st.textDecorationLine || '') + ' ' + (st.textDecoration || ''), deco = ['underline', 'line-through'].filter(x => td.includes(x));
+    if (deco.length) el.style.textDecorationLine = deco.join(' ');
+    if ((to === 'div' || to === 'li') && /^(left|center|right|justify)$/.test(st.textAlign || '')) el.style.textAlign = st.textAlign;
+    if (tag === 'font') {
+      const c = n.getAttribute('color') || ''; if (COLOR_RE.test(c)) el.style.color = c;
+      set('font-family', cleanFont(n.getAttribute('face')));
+      const fz = SIZE_ATTR[n.getAttribute('size')]; if (fz && fz !== 1) el.style.fontSize = fz + 'em';
+    }
+    if (tag === 'mark' && !el.style.backgroundColor) el.style.backgroundColor = '#fde68a';
+    if (/^h[1-4]$/.test(tag)) { el.style.fontWeight = 'bold'; if (!el.style.fontSize) el.style.fontSize = { h1: '1.6em', h2: '1.35em', h3: '1.15em', h4: '1.05em' }[tag]; }
+    if (to === 'span' && !el.getAttribute('style')) { walkClean(n, dst, inA); continue; }
+    dst.appendChild(el); walkClean(n, el, inA || to === 'a');
+  }
+}
+// N'accepte que des balises et styles inoffensifs : protège le mur contre tout code collé ou forgé.
+function sanitizeHTML(html) {
+  if (!html) return '';
+  const src = new DOMParser().parseFromString(String(html), 'text/html').body;
+  const out = document.createElement('div'); walkClean(src, out, false);
+  return out.innerHTML.replace(/(<br>|<div><br><\/div>)+$/, '');
+}
+const SVG = {
+  left: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 6h16M4 12h10M4 18h14"/></svg>',
+  center: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 6h16M7 12h10M5 18h14"/></svg>',
+  right: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 6h16M10 12h10M6 18h14"/></svg>',
+  ul: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.3" fill="currentColor"/><circle cx="4.5" cy="12" r="1.3" fill="currentColor"/><circle cx="4.5" cy="18" r="1.3" fill="currentColor"/></svg>',
+  ol: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M10 6h10M10 12h10M10 18h10"/><text x="2" y="8.5" font-size="7" font-family="Arial" font-weight="700" fill="currentColor" stroke="none">1</text><text x="2" y="14.5" font-size="7" font-family="Arial" font-weight="700" fill="currentColor" stroke="none">2</text><text x="2" y="20.5" font-size="7" font-family="Arial" font-weight="700" fill="currentColor" stroke="none">3</text></svg>',
+  clear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 5h12M12 5l-3 14M4 20L20 4"/></svg>',
+};
+function rteHTML(d, ph) {
+  const init = d.html ? sanitizeHTML(d.html) : esc(d.body || '').replace(/\n/g, '<br>');
+  return `<label class="f">Texte</label><div class="rte"><div class="rte-bar">
+    <select data-sel="fontName" title="Police"><option value="" disabled selected>Police…</option>${FONTS.map(([f, l]) => `<option value="${f}" style="font-family:'${f}'">${l}</option>`).join('')}</select>
+    <select data-sel="fontSize" title="Taille"><option value="" disabled selected>Taille…</option>${[['2', 'Petit'], ['3', 'Normal'], ['4', 'Grand'], ['5', 'Très grand'], ['6', 'Énorme'], ['7', 'Géant']].map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select>
+    <span class="sep"></span>
+    <button type="button" data-cmd="bold" title="Gras (⌘B)"><b>B</b></button><button type="button" data-cmd="italic" title="Italique (⌘I)"><i style="font-family:Georgia,serif">I</i></button><button type="button" data-cmd="underline" title="Souligné (⌘U)"><u>U</u></button><button type="button" data-cmd="strikeThrough" title="Barré"><s>S</s></button>
+    <span class="rte-pw"><button type="button" data-pop title="Couleur du texte"><span style="font-weight:800;border-bottom:4px solid #e11d48;line-height:1">A</span></button><div class="rte-pop" hidden>${TEXT_COLORS.map(c => `<button type="button" data-cmdv="foreColor" data-v="${c}" style="--c:${c}" title="${c}"></button>`).join('')}</div></span>
+    <span class="rte-pw"><button type="button" data-pop title="Surligner">🖍️</button><div class="rte-pop" hidden>${HILITES.map(c => `<button type="button" data-cmdv="hiliteColor" data-v="${c}" style="--c:${c}"></button>`).join('')}<button type="button" class="none" data-cmdv="hiliteColor" data-v="transparent" title="Sans surlignage">✕</button></div></span>
+    <span class="sep"></span>
+    <button type="button" data-cmd="justifyLeft" title="Aligner à gauche">${SVG.left}</button><button type="button" data-cmd="justifyCenter" title="Centrer">${SVG.center}</button><button type="button" data-cmd="justifyRight" title="Aligner à droite">${SVG.right}</button>
+    <button type="button" data-cmd="insertUnorderedList" title="Liste à puces">${SVG.ul}</button><button type="button" data-cmd="insertOrderedList" title="Liste numérotée">${SVG.ol}</button>
+    <button type="button" data-cmd="removeFormat" title="Effacer la mise en forme">${SVG.clear}</button>
+  </div><div class="rte-area txt rich" contenteditable="true" data-ph="${esc(ph)}">${init}</div></div>`;
+}
+function bindRTE(wrap, { onUrl } = {}) {
+  const area = $('.rte-area', wrap); if (!area) return;
+  let range = null;
+  const save = () => { if (!area.isConnected) return document.removeEventListener('selectionchange', save); const sel = getSelection(); if (sel.rangeCount && area.contains(sel.anchorNode)) range = sel.getRangeAt(0).cloneRange(); state(); };
+  document.addEventListener('selectionchange', save);
+  const state = () => $$('[data-cmd]', wrap).forEach(b => { try { b.classList.toggle('on', ['bold', 'italic', 'underline', 'strikeThrough'].includes(b.dataset.cmd) && document.queryCommandState(b.dataset.cmd)); } catch { } });
+  const exec = (cmd, val = null) => {
+    area.focus();
+    if (range) { const sel = getSelection(); sel.removeAllRanges(); sel.addRange(range); }
+    try { document.execCommand('styleWithCSS', false, true); } catch { }
+    if (cmd === 'hiliteColor' && !document.queryCommandSupported?.('hiliteColor')) cmd = 'backColor';
+    document.execCommand(cmd, false, val); save();
+  };
+  $$('[data-cmd]', wrap).forEach(b => { b.onmousedown = e => e.preventDefault(); b.onclick = () => exec(b.dataset.cmd); });
+  $$('[data-sel]', wrap).forEach(sel => sel.onchange = () => { exec(sel.dataset.sel, sel.value); sel.value = ''; });
+  $$('[data-pop]', wrap).forEach(b => { b.onmousedown = e => e.preventDefault(); b.onclick = () => { const pop = b.nextElementSibling, open = pop.hidden; $$('.rte-pop', wrap).forEach(p => p.hidden = true); pop.hidden = !open; }; });
+  $$('[data-cmdv]', wrap).forEach(b => { b.onmousedown = e => e.preventDefault(); b.onclick = () => { exec(b.dataset.cmdv, b.dataset.v); b.closest('.rte-pop').hidden = true; }; });
+  area.addEventListener('paste', e => {
+    const t = (e.clipboardData?.getData('text/plain') || '').trim();
+    if (onUrl && /^(https?:\/\/|www\.)\S+$/i.test(t) && onUrl(t)) { e.preventDefault(); return; }
+    const html = e.clipboardData?.getData('text/html');
+    e.preventDefault();
+    document.execCommand('insertHTML', false, html ? sanitizeHTML(html) : esc(e.clipboardData?.getData('text/plain') || '').replace(/\n/g, '<br>'));
+  });
+  wrap.addEventListener('mousedown', e => { if (!e.target.closest('.rte-pw')) $$('.rte-pop', wrap).forEach(p => p.hidden = true); });
+}
+
+/* ---------------- aperçus de liens (vignettes) ---------------- */
+const PV_CACHE = new Map();
+async function fetchPreview(url) {
+  const sig = ms => (window.AbortSignal && AbortSignal.timeout ? AbortSignal.timeout(ms) : undefined);
+  const okImg = u => /^https:\/\//i.test(u || '') ? String(u).slice(0, 1500) : null;
+  try {
+    const r = await fetch('https://api.microlink.io/?url=' + encodeURIComponent(url), { signal: sig(7000) });
+    if (r.ok) { const j = await r.json(); const x = j?.data; if (j.status === 'success' && x && (x.title || x.image?.url)) return { title: String(x.title || '').slice(0, 200), desc: String(x.description || '').slice(0, 300), img: okImg(x.image?.url), site: String(x.publisher || '').slice(0, 80) }; }
+  } catch { }
+  try {
+    const r = await fetch('https://noembed.com/embed?url=' + encodeURIComponent(url), { signal: sig(5000) });
+    const j = await r.json();
+    if (!j.error && (j.title || j.thumbnail_url)) return { title: String(j.title || '').slice(0, 200), desc: String(j.author_name || '').slice(0, 300), img: okImg(j.thumbnail_url), site: String(j.provider_name || '').slice(0, 80) };
+  } catch { }
+  return null;
+}
+function getPreview(url) { if (!PV_CACHE.has(url)) PV_CACHE.set(url, fetchPreview(url)); return PV_CACHE.get(url); }
+function linkCardHTML(url, pv, title) {
+  pv = pv || {}; const h = hostOf(url);
+  const img = /^https:\/\//i.test(pv.img || '') ? `<img class="pv-img" src="${esc(pv.img)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : '';
+  return `<a class="plink" href="${esc(url)}" target="_blank" rel="noopener" title="${esc(url)}">${img}<span class="pv-row"><img class="pv-fav" src="https://www.google.com/s2/favicons?sz=64&domain=${encodeURIComponent(h)}" alt="" onerror="this.remove()"><span class="pv-t"><b>${esc(title || pv.title || h)}</b>${pv.desc ? `<small class="pv-d">${esc(pv.desc)}</small>` : ''}<small class="pv-u">${esc(pv.site ? pv.site + ' · ' : '')}${esc(shortUrl(url))}</small></span><i>↗</i></span></a>`;
+}
+const PV_TRIED = new Set();
 class Fail extends Error {}
 const fail = m => { throw new Fail(m); };
 
@@ -948,7 +1120,7 @@ function cardEl(p) {
 }
 function bodySig(p) {
   let w = null; if (p.widget) { w = { ...p.widget }; ['running', 'endsAt', 'remaining', 'startedAt', 'acc'].forEach(k => delete w[k]); }
-  return JSON.stringify([p.type, p.title, p.body, p.color, p.size, p.fs, p.hl, p.icon, p.pulse, p.url, p.yt, (p.img || '').length, (p.img || '').slice(-32), (p.audio || '').length, w, p.hidden, p.status, teacherMode(), isAuthor(p), effFormat()]);
+  return JSON.stringify([p.type, p.title, p.body, p.html, p.preview, p.color, p.size, p.fs, p.hl, p.icon, p.pulse, p.url, p.yt, (p.img || '').length, (p.img || '').slice(-32), (p.audio || '').length, w, p.hidden, p.status, teacherMode(), isAuthor(p), effFormat()]);
 }
 function footSig(p) { const w = S.wall; return JSON.stringify([Object.keys(p.likes || {}).length, !!(p.likes || {})[S.user?.uid], p.cc || 0, w.allowLikes, w.allowComments, w.showAuthors, teacherMode(), p.authorName]); }
 function fillCard(el, p) {
@@ -972,17 +1144,22 @@ function fillCard(el, p) {
   if (tm && free) bindFreeDrag(el);
   if (tm) bindResize(el);
   queueFit(el);
+  if (p.type === 'link' && S.isOwner && p.url && !('preview' in p) && !PV_TRIED.has(p.id)) {
+    PV_TRIED.add(p.id);
+    getPreview(p.url).then(pv => S.store.updatePost(S.wallId, p.id, { preview: pv || null })).catch(() => { });
+  }
   el._v = null; $$('[data-tick]', el).forEach(n => n._v = null);
 }
 function bodyHTML(p, tm) {
   const T = p.title ? `<h3>${esc(p.title)}</h3>` : '', B = p.body ? `<div class="txt">${linkify(p.body)}</div>` : '', w = p.widget || {};
+  const R = p.html ? `<div class="txt rich">${sanitizeHTML(p.html)}</div>` : B;
   const emb = (icon, label, src) => `<div class="emb-bar"><span>${icon} ${esc(p.title || label)}</span><button class="ct" data-a="fs" title="Plein écran">⛶</button><a class="ct" href="${esc(src)}" target="_blank" rel="noopener" title="Ouvrir dans un nouvel onglet">↗</a></div><div class="emb"><iframe src="${esc(src)}" allow="fullscreen; autoplay; clipboard-write; encrypted-media" allowfullscreen loading="lazy"></iframe></div>`;
   switch (p.type) {
-    case 'text': return T + B;
-    case 'highlight': return `<div class="hl-inner">${p.icon ? `<div class="hl-icon">${esc(p.icon)}</div>` : ''}${T}${B}</div>`;
+    case 'text': return T + R;
+    case 'highlight': return `<div class="hl-inner">${p.icon ? `<div class="hl-icon">${esc(p.icon)}</div>` : ''}${T}${R}</div>`;
     case 'image': return (p.img ? `<img class="pimg" src="${p.img}" alt="${esc(p.title || 'image')}" loading="lazy">` : '') + T + B;
     case 'audio': return T + (p.audio ? `<audio controls preload="metadata" src="${p.audio}"></audio>` : '') + B;
-    case 'link': { const h = hostOf(p.url); return `<a class="plink" href="${esc(p.url)}" target="_blank" rel="noopener"><img src="https://www.google.com/s2/favicons?sz=64&domain=${encodeURIComponent(h)}" alt=""><span><b>${esc(p.title || h)}</b><small title="${esc(p.url)}">${esc(shortUrl(p.url))}</small></span><i>↗</i></a>` + B; }
+    case 'link': return linkCardHTML(p.url, p.preview, p.title) + B;
     case 'youtube': return T + `<div class="vid"><iframe src="https://www.youtube-nocookie.com/embed/${esc(p.yt)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen loading="lazy"></iframe></div>`;
     case 'clock': return (p.title ? `<div class="w-title">${esc(p.title)}</div>` : '') + `<div class="w-digits" data-tick="clock"></div>` + (w.showDate !== false ? `<div class="w-date" data-tick="date"></div>` : '');
     case 'timer': return (p.title ? `<div class="w-title">${esc(p.title)}</div>` : '') + `<div class="w-digits" data-tick="timer"></div><div class="w-bar"><i></i></div>` + (S.isOwner ? `<div class="w-ctrl"><button class="wb big" data-act="toggle">▶</button><button class="wb" data-act="reset" title="Remettre à zéro">↺</button>${[1, 2, 3, 5, 10].map(m => `<button class="wb" data-act="preset" data-m="${m}">${m}′</button>`).join('')}<button class="wb" data-act="plus">+1′</button></div>` : '');
@@ -1131,11 +1308,11 @@ function fieldsHTML(type, d, owner) {
   const sec = S.wall.format === 'columns' && (S.wall.sections || []).length > 1 ? `<label class="f">Colonne</label><select name="sectionId">${S.wall.sections.map(s => `<option value="${esc(s.id)}" ${d.sectionId === s.id ? 'selected' : ''}>${esc(s.title)}</option>`).join('')}</select>` : '';
   const row = (...a) => { const x = a.filter(Boolean); return x.length ? `<div class="row2">${x.join('')}</div>` : ''; };
   switch (type) {
-    case 'text': return T() + B() + row(fs, size) + colors + sec;
-    case 'highlight': return T('Ex : Homework for Monday!') + B('Message important…') + `<label class="f">Couleur du cadre</label><div class="swatches">${Object.entries(HL).map(([k, c]) => `<label class="sw" style="--c:${c}"><input type="radio" name="hl" value="${k}" ${(d.hl || 'red') === k ? 'checked' : ''}><span></span></label>`).join('')}</div>` + row(`<div><label class="f">Icône</label><select name="icon">${['', '⚠️', '⭐', '📌', '❗', '💡', '🎯', '📣', '📅', '✅'].map(i => `<option value="${i}" ${(d.icon || '') === i ? 'selected' : ''}>${i || 'Aucune'}</option>`).join('')}</select></div>`, fs) + row(size) + `<label class="chk"><input type="checkbox" name="pulse" ${d.pulse ? 'checked' : ''}> Faire pulser le cadre pour attirer l'attention</label>` + colors + sec;
+    case 'text': return T() + rteHTML(d, 'Écris ici… (colle un lien seul pour créer une vignette)') + row(fs, size) + colors + sec;
+    case 'highlight': return T('Ex : Homework for Monday!') + rteHTML(d, 'Message important…') + `<label class="f">Couleur du cadre</label><div class="swatches">${Object.entries(HL).map(([k, c]) => `<label class="sw" style="--c:${c}"><input type="radio" name="hl" value="${k}" ${(d.hl || 'red') === k ? 'checked' : ''}><span></span></label>`).join('')}</div>` + row(`<div><label class="f">Icône</label><select name="icon">${['', '⚠️', '⭐', '📌', '❗', '💡', '🎯', '📣', '📅', '✅'].map(i => `<option value="${i}" ${(d.icon || '') === i ? 'selected' : ''}>${i || 'Aucune'}</option>`).join('')}</select></div>`, fs) + row(size) + `<label class="chk"><input type="checkbox" name="pulse" ${d.pulse ? 'checked' : ''}> Faire pulser le cadre pour attirer l'attention</label>` + colors + sec;
     case 'image': return `<div class="drop" id="img-drop"><div id="img-prev">${d.img ? `<img src="${d.img}" alt="">` : '🖼️<br>Choisir une photo<br><small>ou coller une image (⌘V)</small>'}</div><input type="file" accept="image/*" id="img-file" hidden></div>` + T('Légende (facultatif)') + B('Description (facultatif)') + row(size) + colors + sec;
     case 'audio': return `<div class="rec"><button type="button" class="btn primary" id="rec-btn">⏺ Enregistrer</button><span id="rec-t" class="muted"></span><label class="btn" for="aud-file">📁 Choisir un fichier</label><input type="file" accept="audio/*" id="aud-file" hidden></div><div id="aud-prev" style="margin-top:10px">${d.audio ? `<audio controls src="${d.audio}"></audio>` : ''}</div><p class="muted small">90 secondes maximum.</p>` + T() + B('Description (facultatif)') + colors + sec;
-    case 'link': return `<label class="f">Adresse du lien</label><input name="url" type="url" inputmode="url" placeholder="https://…" value="${esc(d.url || '')}">` + T() + B('Description (facultatif)') + row(size) + colors + sec;
+    case 'link': return `<label class="f">Adresse du lien</label><input name="url" type="url" inputmode="url" placeholder="https://…" value="${esc(d.url || '')}"><div id="pv-box"></div>` + T('Titre (facultatif : sinon celui du site)') + B('Description (facultatif)') + row(size) + colors + sec;
     case 'youtube': return `<label class="f">Lien de la vidéo YouTube</label><input name="url" inputmode="url" placeholder="https://www.youtube.com/watch?v=…" value="${esc(d.url || '')}">` + T() + row(size) + colors + sec;
     case 'clock': return T('Ex : What time is it?') + `<label class="chk"><input type="checkbox" name="widget.h12" ${d.widget?.h12 ? 'checked' : ''}> Format anglais 12 h (am / pm)</label><label class="chk"><input type="checkbox" name="widget.showDate" ${d.widget?.showDate !== false ? 'checked' : ''}> Afficher la date en anglais</label>` + row(size) + colors + sec;
     case 'timer': return T('Ex : Work in pairs') + `<label class="f">Durée (minutes)</label><input name="widget.min" type="number" min="0.25" max="180" step="0.25" value="${d.widget?.duration ? d.widget.duration / 60000 : 5}">` + row(size) + colors + sec;
@@ -1155,7 +1332,12 @@ function openEditor(post, opts = {}) {
   root.innerHTML = (editing ? '' : `<div class="type-chips">${types.map(([k, t]) => `<button type="button" class="chip" data-type="${k}">${t.icon} ${t.label}</button>`).join('')}</div>`) + '<div class="fields"></div>';
   const fields = $('.fields', root);
   let rec = null;
-  const collect = () => $$('[name]', fields).forEach(i => { if (i.type === 'radio') { if (i.checked) setPath(d, i.name, i.value); } else if (i.type === 'checkbox') setPath(d, i.name, i.checked); else setPath(d, i.name, i.value); });
+  if (post?.preview) d.previewFor = post.url;
+  const collect = () => {
+    $$('[name]', fields).forEach(i => { if (i.type === 'radio') { if (i.checked) setPath(d, i.name, i.value); } else if (i.type === 'checkbox') setPath(d, i.name, i.checked); else setPath(d, i.name, i.value); });
+    const area = $('.rte-area', fields);
+    if (area) { d.html = sanitizeHTML(area.innerHTML); d.body = area.innerText.replace(/\n{3,}/g, '\n\n').trim(); }
+  };
   function draw() {
     $$('.chip', root).forEach(c => c.classList.toggle('on', c.dataset.type === type));
     fields.innerHTML = fieldsHTML(type, d, owner);
@@ -1167,6 +1349,28 @@ function openEditor(post, opts = {}) {
       drop.ondragover = e => e.preventDefault(); drop.ondrop = e => { e.preventDefault(); take(e.dataTransfer.files[0]); };
       root.onpaste = e => { const it = [...(e.clipboardData?.items || [])].find(i => i.type.startsWith('image/')); if (it) take(it.getAsFile()); };
     } else root.onpaste = null;
+    const rte = $('.rte', fields);
+    if (rte) bindRTE(rte, { onUrl: t => {
+      if (editing || type !== 'text' || $('.rte-area', fields).innerText.trim()) return false;
+      collect(); d.url = /^www\./i.test(t) ? 'https://' + t : t; d.body = ''; d.html = '';
+      type = ytId(t) ? 'youtube' : 'link'; draw(); return true;
+    } });
+    if (type === 'link') {
+      const inp = $('[name=url]', fields), box = $('#pv-box', fields); let tmr;
+      const norm = v => { v = v.trim(); return v && !/^https?:\/\//i.test(v) ? 'https://' + v : v; };
+      const run = async () => {
+        const u = norm(inp.value); if (!u) { box.innerHTML = ''; return; }
+        try { new URL(u); } catch { return; }
+        if (d.previewFor === u && d.preview) { box.innerHTML = linkCardHTML(u, d.preview, ''); return; }
+        box.innerHTML = '<p class="muted small">⏳ Préparation de la vignette…</p>';
+        const pv = await getPreview(u);
+        if (norm(inp.value) !== u || !box.isConnected) return;
+        d.preview = pv; d.previewFor = u;
+        box.innerHTML = pv ? linkCardHTML(u, pv, '') : '<p class="muted small">Pas de vignette disponible pour ce site : le lien s\'affichera avec son icône.</p>';
+      };
+      inp.oninput = () => { clearTimeout(tmr); tmr = setTimeout(run, 600); };
+      if (inp.value) run();
+    }
     if (type === 'audio') {
       const btn = $('#rec-btn', fields), tl = $('#rec-t', fields), prev = $('#aud-prev', fields);
       const showAudio = src => { prev.innerHTML = `<audio controls src="${src}"></audio>`; };
@@ -1202,11 +1406,11 @@ async function savePost(type, d, media, post, opts) {
   const base = { type, title: (d.title || '').trim(), body: (d.body || '').trim(), color: d.color || 'white', size: d.size || 'M', fs: +d.fs || 1 };
   if (S.wall.format === 'columns') base.sectionId = d.sectionId || opts.sectionId || (S.wall.sections || [])[0]?.id || 's1';
   switch (type) {
-    case 'text': if (!base.title && !base.body) fail('Écris quelque chose 🙂'); break;
-    case 'highlight': if (!base.title && !base.body) fail('Écris le message à mettre en valeur.'); Object.assign(base, { hl: d.hl || 'red', icon: d.icon || '', pulse: !!d.pulse }); break;
+    case 'text': if (!base.title && !base.body) fail('Écris quelque chose 🙂'); base.html = d.html || null; break;
+    case 'highlight': if (!base.title && !base.body) fail('Écris le message à mettre en valeur.'); base.html = d.html || null; Object.assign(base, { hl: d.hl || 'red', icon: d.icon || '', pulse: !!d.pulse }); break;
     case 'image': if (!media.img) fail('Choisis une image.'); base.img = media.img; break;
     case 'audio': if (!media.audio) fail("Enregistre ou choisis un son."); base.audio = media.audio; break;
-    case 'link': { let u = (d.url || '').trim(); if (!u) fail('Colle une adresse.'); if (!/^https?:\/\//i.test(u)) u = 'https://' + u; try { new URL(u); } catch { fail('Adresse invalide.'); } base.url = u; break; }
+    case 'link': { let u = (d.url || '').trim(); if (!u) fail('Colle une adresse.'); if (!/^https?:\/\//i.test(u)) u = 'https://' + u; try { new URL(u); } catch { fail('Adresse invalide.'); } base.url = u; base.preview = (d.previewFor === u && d.preview) ? d.preview : (await getPreview(u)) || null; break; }
     case 'youtube': { const id = ytId(d.url); if (!id) fail('Lien YouTube non reconnu.'); base.url = d.url.trim(); base.yt = id; break; }
     case 'clock': base.widget = { h12: !!d.widget?.h12, showDate: d.widget?.showDate !== false }; break;
     case 'timer': { const ms = Math.round(Math.max(.25, +d.widget?.min || 5) * 60000); base.widget = (editing && post.widget?.duration === ms) ? { ...post.widget } : { duration: ms, remaining: ms, running: false, endsAt: 0 }; delete base.widget.min; break; }
@@ -1214,6 +1418,7 @@ async function savePost(type, d, media, post, opts) {
     case 'quizlet': { const q = quizletId(d.url); if (!q) fail('Lien Quizlet non reconnu (il doit contenir le numéro du set).'); base.url = d.url.trim(); base.widget = { qid: q, mode: d.widget?.mode || 'flashcards' }; break; }
     case 'embed': { const u = embedUrl(d.url); if (!u) fail("Adresse ou code d'intégration invalide."); base.url = u; base.widget = { url: u }; break; }
   }
+  if ((base.html || '').length > 40000) fail('Texte trop long.');
   if ((base.img || '').length + (base.audio || '').length > 980000) fail('Fichier trop lourd. Essaie une image plus petite ou un son plus court.');
   if (editing) { await S.store.updatePost(S.wallId, post.id, clean(base)); toast('Modifié ✓', 'ok'); }
   else {
