@@ -172,7 +172,16 @@ audio{width:100%;margin:.3em 0;display:block}
 .card.fixed-h .emb{flex:1;height:auto;min-height:0}
 .card.fixed-h .vid{flex:1;padding-top:0}
 .card.fixed-h.widget .card-body{justify-content:center}
-.rz{position:absolute;right:0;bottom:0;width:24px;height:24px;cursor:nwse-resize;touch-action:none;background:linear-gradient(135deg,transparent 50%,rgba(0,0,0,.28) 50%);z-index:3}
+.rz{position:absolute;right:2px;bottom:2px;width:30px;height:30px;cursor:nwse-resize;touch-action:none;z-index:3;border-radius:8px;display:flex;align-items:flex-end;justify-content:flex-end;opacity:0;transition:opacity .15s}
+.rz.v{cursor:ns-resize}
+.rz::after{content:'';width:12px;height:12px;margin:6px;border-right:3px solid rgba(0,0,0,.45);border-bottom:3px solid rgba(0,0,0,.45);border-radius:0 0 4px 0}
+.rz:hover{background:rgba(0,0,0,.08)}
+.card:hover .rz,.touch .rz,.card.fixed-h .rz{opacity:1}
+.card.dark .rz::after{border-color:rgba(255,255,255,.65)}
+.card.fixed-h .pimg{flex:1;min-height:0;max-height:none;object-fit:cover}
+.card-body.fit{overflow:hidden!important}
+.card-body.fit .txt,.card-body.fit h3{overflow-wrap:normal;word-break:normal}
+.card-body.fit a{overflow-wrap:anywhere;word-break:break-all}
 .card.dragging{box-shadow:0 20px 50px rgba(0,0,0,.35);z-index:9999!important}
 .is-dragging iframe{pointer-events:none}
 .ghost{opacity:.35}.chosen{box-shadow:0 18px 40px rgba(0,0,0,.35)}
@@ -280,7 +289,31 @@ const FB_VERSION = '11.0.2';
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const linkify = s => esc(s).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+// Affiche une version courte des adresses ; le lien cliquable garde l'adresse complète.
+function shortUrl(u, max = 42) {
+  try {
+    const x = new URL(u), host = x.hostname.replace(/^www\./, '');
+    let path = x.pathname; try { path = decodeURIComponent(path); } catch { }
+    path = path.replace(/\/$/, '');
+    const segs = path.split('/').filter(Boolean), extra = x.search || x.hash;
+    let out = host + path;
+    if (out.length > max || segs.length > 2) out = host + (segs.length ? (segs.length > 1 ? '/…/' : '/') + segs[segs.length - 1] : '');
+    if (extra && out.length < max - 2) out += '…';
+    return out.length > max ? out.slice(0, max - 1) + '…' : out;
+  } catch { return u.length > max ? u.slice(0, max - 1) + '…' : u; }
+}
+const URL_RE = /\b(?:https?:\/\/|www\.)[^\s<>"']+/gi;
+function linkify(text) {
+  const s = String(text ?? ''); let out = '', last = 0;
+  for (const m of s.matchAll(URL_RE)) {
+    let u = m[0];
+    while (/[.,!?;:\]}»)]$/.test(u)) { if (u.endsWith(')') && (u.split('(').length - 1) >= (u.split(')').length - 1)) break; u = u.slice(0, -1); }
+    const full = /^www\./i.test(u) ? 'https://' + u : u;
+    out += esc(s.slice(last, m.index)) + `<a href="${esc(full)}" target="_blank" rel="noopener" title="${esc(full)}">${esc(shortUrl(full))}</a>`;
+    last = m.index + u.length;
+  }
+  return out + esc(s.slice(last));
+}
 const clone = o => JSON.parse(JSON.stringify(o));
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const genCode = (n = 6) => Array.from({ length: n }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join('');
@@ -870,7 +903,7 @@ function renderPosts() {
   if (!S.wall || !$('#scroll')) return;
   ensureContainers();
   const fmt = effFormat(), vis = visiblePosts(), ids = new Set(vis.map(p => p.id));
-  for (const [id, el] of S.els) if (!ids.has(id)) { el.remove(); S.els.delete(id); }
+  for (const [id, el] of S.els) if (!ids.has(id)) { if (RO) RO.unobserve(el); el.remove(); S.els.delete(id); }
   const secIds = (S.wall.sections || []).map(s => s.id), first = secIds[0] || 's1', groups = {};
   vis.forEach(p => { const k = fmt === 'columns' ? (secIds.includes(p.sectionId) ? p.sectionId : first) : 'main'; (groups[k] = groups[k] || []).push(p); });
   for (const k in S.lists) {
@@ -879,7 +912,7 @@ function renderPosts() {
     arr.forEach((p, i) => {
       const el = cardEl(p);
       if (fmt === 'free') { if (p.x == null) { const col = i % 4, row = Math.floor(i / 4); p.x = 40 + col * 340; p.y = 40 + row * 330; } if (S.dragging !== p.id) placeFree(el, p); el.style.zIndex = i + 1; }
-      else { el.style.left = el.style.top = el.style.width = el.style.height = el.style.zIndex = ''; el.classList.remove('fixed-h'); }
+      else { el.style.left = el.style.top = el.style.width = el.style.zIndex = ''; if (S.dragging !== p.id) { el.style.height = p.fh ? p.fh * S.scale + 'px' : ''; el.classList.toggle('fixed-h', !!p.fh); } }
       if (list.children[i] !== el) list.insertBefore(el, list.children[i] || null);
     });
   }
@@ -907,7 +940,7 @@ function onSortEnd(evt) {
 }
 function cardEl(p) {
   let el = S.els.get(p.id);
-  if (!el) { el = document.createElement('article'); el.dataset.id = p.id; S.els.set(p.id, el); }
+  if (!el) { el = document.createElement('article'); el.dataset.id = p.id; S.els.set(p.id, el); if (RO) RO.observe(el); }
   el._post = p;
   const sig = bodySig(p); if (el._sig !== sig) { el._sig = sig; fillCard(el, p); }
   const fs = footSig(p); if (el._fsig !== fs) { el._fsig = fs; fillFoot(el, p); }
@@ -915,7 +948,7 @@ function cardEl(p) {
 }
 function bodySig(p) {
   let w = null; if (p.widget) { w = { ...p.widget }; ['running', 'endsAt', 'remaining', 'startedAt', 'acc'].forEach(k => delete w[k]); }
-  return JSON.stringify([p.type, p.title, p.body, p.color, p.size, p.fs, p.hl, p.icon, p.pulse, p.url, p.yt, (p.img || '').length, (p.img || '').slice(-32), (p.audio || '').length, w, p.hidden, p.status, teacherMode(), isAuthor(p), effFormat() === 'free']);
+  return JSON.stringify([p.type, p.title, p.body, p.color, p.size, p.fs, p.hl, p.icon, p.pulse, p.url, p.yt, (p.img || '').length, (p.img || '').slice(-32), (p.audio || '').length, w, p.hidden, p.status, teacherMode(), isAuthor(p), effFormat()]);
 }
 function footSig(p) { const w = S.wall; return JSON.stringify([Object.keys(p.likes || {}).length, !!(p.likes || {})[S.user?.uid], p.cc || 0, w.allowLikes, w.allowComments, w.showAuthors, teacherMode(), p.authorName]); }
 function fillCard(el, p) {
@@ -929,13 +962,16 @@ function fillCard(el, p) {
   if (tm) tools = `<button class="ct" data-a="edit" title="Modifier">✏️</button><button class="ct" data-a="hide" title="${p.hidden ? 'Révéler aux élèves' : 'Cacher aux élèves'}">${p.hidden ? '👁' : '🙈'}</button><button class="ct" data-a="del" title="Supprimer">🗑</button>`;
   else if (mine) tools = `<button class="ct" data-a="del" title="Supprimer">🗑</button>`;
   const head = (tm || badges.length || tools) ? `<div class="card-head">${tm ? '<span class="drag" title="Déplacer">⠿</span>' : ''}${badges.join('')}<div class="card-tools">${tools}</div></div>` : '';
-  const free = effFormat() === 'free';
-  el.innerHTML = head + `<div class="card-body">${bodyHTML(p, tm)}</div><div class="card-foot"></div>` + (tm && free ? '<span class="rz" title="Redimensionner"></span>' : '');
+  const fmt = effFormat(), free = fmt === 'free';
+  const rz = tm && fmt !== 'stack' ? `<span class="rz${fmt === 'wall' || fmt === 'columns' ? ' v' : ''}" title="Glisser pour redimensionner · double-clic : taille automatique"></span>` : '';
+  el.innerHTML = head + `<div class="card-body">${bodyHTML(p, tm)}</div><div class="card-foot"></div>` + rz;
   el._fsig = null;
   $$('[data-a]', el).forEach(b => b.onclick = e => { e.stopPropagation(); cardAction(el._post, b.dataset.a, el); });
   $$('[data-act]', el).forEach(b => b.onclick = e => { e.stopPropagation(); widgetAct(el._post, b.dataset.act, +b.dataset.m || 0); });
   const img = $('.pimg', el); if (img) img.onclick = () => lightbox(el._post.img);
-  if (tm && free) { bindFreeDrag(el); bindResize(el); }
+  if (tm && free) bindFreeDrag(el);
+  if (tm) bindResize(el);
+  queueFit(el);
   el._v = null; $$('[data-tick]', el).forEach(n => n._v = null);
 }
 function bodyHTML(p, tm) {
@@ -946,7 +982,7 @@ function bodyHTML(p, tm) {
     case 'highlight': return `<div class="hl-inner">${p.icon ? `<div class="hl-icon">${esc(p.icon)}</div>` : ''}${T}${B}</div>`;
     case 'image': return (p.img ? `<img class="pimg" src="${p.img}" alt="${esc(p.title || 'image')}" loading="lazy">` : '') + T + B;
     case 'audio': return T + (p.audio ? `<audio controls preload="metadata" src="${p.audio}"></audio>` : '') + B;
-    case 'link': { const h = hostOf(p.url); return `<a class="plink" href="${esc(p.url)}" target="_blank" rel="noopener"><img src="https://www.google.com/s2/favicons?sz=64&domain=${encodeURIComponent(h)}" alt=""><span><b>${esc(p.title || h)}</b><small>${esc(h)}</small></span><i>↗</i></a>` + B; }
+    case 'link': { const h = hostOf(p.url); return `<a class="plink" href="${esc(p.url)}" target="_blank" rel="noopener"><img src="https://www.google.com/s2/favicons?sz=64&domain=${encodeURIComponent(h)}" alt=""><span><b>${esc(p.title || h)}</b><small title="${esc(p.url)}">${esc(shortUrl(p.url))}</small></span><i>↗</i></a>` + B; }
     case 'youtube': return T + `<div class="vid"><iframe src="https://www.youtube-nocookie.com/embed/${esc(p.yt)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen loading="lazy"></iframe></div>`;
     case 'clock': return (p.title ? `<div class="w-title">${esc(p.title)}</div>` : '') + `<div class="w-digits" data-tick="clock"></div>` + (w.showDate !== false ? `<div class="w-date" data-tick="date"></div>` : '');
     case 'timer': return (p.title ? `<div class="w-title">${esc(p.title)}</div>` : '') + `<div class="w-digits" data-tick="timer"></div><div class="w-bar"><i></i></div>` + (S.isOwner ? `<div class="w-ctrl"><button class="wb big" data-act="toggle">▶</button><button class="wb" data-act="reset" title="Remettre à zéro">↺</button>${[1, 2, 3, 5, 10].map(m => `<button class="wb" data-act="preset" data-m="${m}">${m}′</button>`).join('')}<button class="wb" data-act="plus">+1′</button></div>` : '');
@@ -994,19 +1030,58 @@ function bindFreeDrag(el) {
 }
 function bindResize(el) {
   const h = $('.rz', el); if (!h) return;
+  h.ondblclick = e => {
+    e.stopPropagation(); const p = el._post, patch = effFormat() === 'free' ? { h: null } : { fh: null };
+    applyLocal(p, patch); renderPosts(); guard(() => S.store.updatePost(S.wallId, p.id, patch));
+  };
   h.onpointerdown = e => {
     e.preventDefault(); e.stopPropagation();
-    const p = el._post, s = S.scale, sx = e.clientX, sy = e.clientY, ow = p.w || el.offsetWidth / s, oh = p.h || el.offsetHeight / s;
+    const fmt = effFormat(), free = fmt === 'free', grid = fmt === 'grid';
+    const p = el._post, s = S.scale, sx = e.clientX, sy = e.clientY, ow = el.offsetWidth / s, oh = el.offsetHeight / s, osize = p.size || 'M';
+    let moved = false;
     S.dragging = p.id; document.body.classList.add('is-dragging'); h.setPointerCapture(e.pointerId);
-    const mv = ev => { const nw = Math.max(180, ow + (ev.clientX - sx) / s), nh = Math.max(110, oh + (ev.clientY - sy) / s); el.style.width = nw * s + 'px'; el.style.height = nh * s + 'px'; el.classList.add('fixed-h'); el._nw = nw; el._nh = nh; };
+    const mv = ev => {
+      if (!moved && Math.abs(ev.clientX - sx) + Math.abs(ev.clientY - sy) < 3) return;
+      moved = true;
+      const nh = Math.max(free ? 110 : 80, oh + (ev.clientY - sy) / s);
+      el.style.height = nh * s + 'px'; el.classList.add('fixed-h'); el._nh = nh;
+      if (free) { const nw = Math.max(180, ow + (ev.clientX - sx) / s); el.style.width = nw * s + 'px'; el._nw = nw; }
+      else if (grid) {
+        const dx = (ev.clientX - sx) / s, sz = osize === 'L' ? (dx < -ow * .3 ? 'M' : 'L') : (dx > ow * .35 ? 'L' : osize);
+        if (el._sz !== sz) { el.classList.remove('sz-S', 'sz-M', 'sz-L'); el.classList.add('sz-' + sz); el._sz = sz; }
+      }
+    };
     const up = () => {
       h.removeEventListener('pointermove', mv); h.removeEventListener('pointerup', up); h.removeEventListener('pointercancel', up);
       document.body.classList.remove('is-dragging'); S.dragging = null;
-      if (el._nw != null) { const patch = { w: Math.round(el._nw), h: Math.round(el._nh) }; applyLocal(p, patch); el._nw = null; guard(() => S.store.updatePost(S.wallId, p.id, patch)); }
+      if (!moved) return;
+      const patch = free ? { w: Math.round(el._nw ?? ow), h: Math.round(el._nh) } : { fh: Math.round(el._nh) };
+      if (grid && el._sz && el._sz !== osize) patch.size = el._sz;
+      el._nw = el._nh = el._sz = null;
+      applyLocal(p, patch); renderPosts(); guard(() => S.store.updatePost(S.wallId, p.id, patch));
     };
     h.addEventListener('pointermove', mv); h.addEventListener('pointerup', up); h.addEventListener('pointercancel', up);
   };
 }
+
+/* ---------------- texte qui s'adapte à la taille de la carte ---------------- */
+const FIT_TYPES = new Set(['text', 'highlight']);
+const fitQ = new Set(); let fitRaf = 0;
+const RO = 'ResizeObserver' in window ? new ResizeObserver(es => es.forEach(e => queueFit(e.target))) : null;
+function queueFit(el) { fitQ.add(el); if (!fitRaf) fitRaf = requestAnimationFrame(() => { fitRaf = 0; const a = [...fitQ]; fitQ.clear(); a.forEach(fitCard); }); }
+function fitCard(el) {
+  const p = el._post, body = $('.card-body', el);
+  if (!p || !body || !el.isConnected) return;
+  if (!FIT_TYPES.has(p.type) || !el.classList.contains('fixed-h')) { if (body.style.fontSize) { body.style.fontSize = ''; body.classList.remove('fit'); } return; }
+  body.classList.add('fit');
+  const fits = k => { body.style.fontSize = k + 'em'; return body.scrollHeight <= body.clientHeight + 1 && body.scrollWidth <= body.clientWidth + 1; };
+  let lo = .7, hi = 6;
+  // Carte trop petite : on garde un texte lisible et on autorise le défilement.
+  if (!fits(lo)) { body.classList.remove('fit'); body.style.fontSize = lo + 'em'; return; }
+  for (let i = 0; i < 12; i++) { const m = (lo + hi) / 2; if (fits(m)) lo = m; else hi = m; }
+  body.style.fontSize = lo.toFixed(3) + 'em';
+}
+if (document.fonts?.ready) document.fonts.ready.then(() => S.els.forEach(queueFit));
 
 /* ---------------- widgets (horloge, minuteur, chrono) ---------------- */
 function widgetAct(p, act, m) {
@@ -1183,7 +1258,7 @@ function previewHTML(p) {
   let h = p.title ? `<b>${esc(p.title)}</b><br>` : '';
   if (p.img) h += `<img src="${p.img}" alt=""><br>`;
   if (p.audio) h += `<audio controls src="${p.audio}"></audio>`;
-  if (p.url) h += `<a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.url)}</a><br>`;
+  if (p.url) h += `<a href="${esc(p.url)}" target="_blank" rel="noopener" title="${esc(p.url)}">${esc(shortUrl(p.url))}</a><br>`;
   if (p.body) h += esc(p.body);
   return h;
 }
