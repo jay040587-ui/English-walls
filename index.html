@@ -89,6 +89,7 @@ label.chk input{width:20px;height:20px;accent-color:var(--accent);flex:none}
 .tb-btn{background:rgba(255,255,255,.13);color:#fff;border:0;border-radius:12px;height:42px;min-width:42px;padding:0 .75em;font-weight:800;display:inline-flex;align-items:center;justify-content:center;gap:.35em;font-size:.95rem;white-space:nowrap}
 .tb-btn:hover{background:rgba(255,255,255,.24)}
 .tb-btn.on{background:#fff;color:#1f2335}
+@media(max-width:1500px){#b-keep .lbl,#b-preview .lbl{display:none}}
 .tb-btn.pending{background:#f59e0b;color:#231400;animation:pp 1.6s infinite}
 @keyframes pp{50%{box-shadow:0 0 0 5px rgba(245,158,11,.35)}}
 .tb-group{display:inline-flex;align-items:center;gap:4px}
@@ -336,8 +337,8 @@ function doPost(e) {
     } else {
       sujet = '⚠️ ' + titre + ' : publication de ' + auteur + ' en votre absence';
       corps = auteur + ' vient de publier sur le mur « ' + titre + ' » (' + mur + ') pendant que vous n\'étiez pas connecté.\n';
-      if (d.pending) corps += '\n🔒 Elle a été mise en attente automatiquement : personne ne la voit tant que vous ne l\'avez pas validée.\n';
-      if (d.wasOpen) corps += '👉 Les publications de ce mur sont restées ouvertes : pensez à cliquer sur « 🔒 Fermé ».\n';
+      if (d.pending) corps += '\n⏳ Elle attend votre validation (📥 sur le mur).\n';
+      if (d.keepOpen) corps += '\n📌 Ce mur est réglé sur « Ouvert en mon absence ». Si ce n\'était pas voulu, ouvrez le mur et désactivez 📌 (ou cliquez sur « 🔒 Fermé »).\n';
       if (d.snippet) corps += '\n« ' + court(d.snippet, 200) + ' »\n';
       if (plus) corps += '\n(+ ' + plus + " autre(s) publication(s) depuis l'e-mail précédent)\n";
       if (/^https:\/\//.test(d.link || '')) corps += '\nOuvrir le mur : ' + court(d.link, 300);
@@ -797,8 +798,9 @@ async function makeFirebaseStore() {
     async deleteComment(w, p, c) { await deleteDoc(doc(db, 'walls', w, 'posts', p, 'comments', c)); await updateDoc(postRef(w, p), { cc: increment(-1) }).catch(() => {}); },
     async getTeacher(uid) { const s = await getDoc(doc(db, 'teachers', uid)); return s.exists() ? s.data() : { games: [] }; },
     saveTeacher: (uid, data) => setDoc(doc(db, 'teachers', uid), data, { merge: true }),
-    setPresence: uid => setDoc(doc(db, 'presence', uid), { lastSeen: serverTimestamp() }),
-    async getPresence(uid) { const s = await getDoc(doc(db, 'presence', uid)); const v = s.exists() ? s.data().lastSeen : 0; return typeof v === 'number' ? v : (v?.toMillis?.() || 0); },
+    setPresence: w => setDoc(doc(db, 'presence', w), { lastSeen: serverTimestamp() }),
+    clearPresence: w => deleteDoc(doc(db, 'presence', w)),
+    async getPresence(w) { const s = await getDoc(doc(db, 'presence', w)); const v = s.exists() ? s.data().lastSeen : 0; return typeof v === 'number' ? v : (v?.toMillis?.() || 0); },
   };
 }
 
@@ -834,7 +836,7 @@ function makeDemoStore() {
     deleteComment: async (w, p, c) => { delete db.comments[c]; if (db.posts[p]) db.posts[p].cc = Math.max(0, (db.posts[p].cc || 1) - 1); emit(); },
     getTeacher: async uid => clone(db.teachers[uid] || { games: [] }),
     saveTeacher: async (uid, data) => { db.teachers[uid] = { ...(db.teachers[uid] || {}), ...clone(data) }; emit(); },
-    setPresence: async () => { }, getPresence: async () => 0,
+    setPresence: async () => { }, clearPresence: async () => { }, getPresence: async () => 0,
   };
 }
 function seedDemo(db) {
@@ -866,6 +868,7 @@ const effFormat = () => { const f = S.wall?.format || 'columns'; return (f === '
 function href(q = '') { const p = new URLSearchParams(q); if (S.demo) p.set('demo', '1'); const s = p.toString(); return location.pathname + (s ? '?' + s : ''); }
 function go(q) { history.pushState({}, '', href(q)); route(); }
 function cleanup() {
+  stopWallPresence();
   S.unsubs.forEach(u => { try { u && u(); } catch { } }); S.unsubs = [];
   S.wall = null; S.posts = []; S.postsLoaded = false; S.isOwner = false; S.preview = false; S.els = new Map(); S.lists = {}; S.ckey = null;
   if (S.trayEl) { S.trayEl.remove(); S.trayEl = null; }
@@ -1041,6 +1044,7 @@ function viewBoard() {
       <button class="tb-btn pending" id="b-pending" hidden title="Publications à valider">📥 <span id="pend-n">0</span></button>
       <button class="tb-btn own-only" id="b-widgets" title="Ajouter un widget">🧩<span class="lbl"> Widgets</span></button>
       <button class="tb-btn own-only" id="b-preview" title="Voir le mur comme un élève">👁<span class="lbl"> Vue élève</span></button>
+      <button class="tb-btn own-only" id="b-keep" title="📌 Garder ouvert : laisser les élèves publier même quand vous n'êtes pas sur ce mur">📌<span class="lbl"> Garder ouvert</span></button>
       <button class="tb-btn own-only" id="b-share" title="Partager avec la classe">🔗<span class="lbl"> Partager</span></button>
       <button class="tb-btn own-only" id="b-settings" title="Réglages du mur">⚙️</button>
       <div class="tb-group zoom"><button class="tb-btn" id="z-minus" title="Réduire le texte">A−</button><button class="tb-btn" id="z-plus" title="Agrandir le texte">A+</button></div>
@@ -1061,7 +1065,11 @@ function viewBoard() {
   $('#z-plus').onclick = () => setScale(S.scale + .1);
   $('#b-full').onclick = toggleFullscreen;
   $('#b-me').onclick = async () => { const n = await promptBox('Ton prénom', 'Prénom affiché sur tes publications', getName(), 'Enregistrer'); if (n) { localStorage.setItem('ew-name', n); updateChrome(); } };
-  $('#fab').onclick = () => { if (!canPost()) return toast('Les publications sont fermées pour le moment.', 'err'); openEditor(null, {}); };
+  $('#b-keep').onclick = () => {
+    const v = !S.wall.keepOpen; S.wall.keepOpen = v; updateChrome();
+    guard(async () => { await S.store.updateWall(S.wallId, { keepOpen: v, updatedAt: Date.now() }); toast(v ? '📌 Les élèves pourront publier même quand vous ne serez pas sur ce mur.' : '🔒 Les publications se bloqueront automatiquement dès que vous quitterez ce mur.', 'ok'); });
+  };
+  $('#fab').onclick = async () => { if (!canPost()) return toast('Les publications sont fermées pour le moment.', 'err'); if (await blockedByAbsence()) return toast('🔒 Le professeur n\'est pas sur le mur : les publications sont fermées pour le moment.', 'err'); openEditor(null, {}); };
   S.unsubs.push(S.store.watchWall(S.wallId, onWall, e => { console.error(e); viewNotFound(errMsg(e)); }));
 }
 function viewNotFound(msg) {
@@ -1076,7 +1084,8 @@ function onWall(w) {
   S.isOwner = !!S.user && w.ownerUid === S.user.uid;
   if (first) {
     S.unsubs.push(S.store.watchPosts(S.wallId, { owner: S.isOwner, uid: S.user.uid }, list => { S.posts = list; S.postsLoaded = true; renderPosts(); renderTray(); checkSpot(); }));
-    if (S.isOwner) loadTeacher().then(ensureNotify);
+    if (S.isOwner) { loadTeacher().then(ensureNotify); startWallPresence(); }
+    else if (!S.wall.keepOpen) teacherAway().then(() => updateChrome());
   }
   updateChrome(); renderPosts(); checkSpot();
 }
@@ -1096,8 +1105,10 @@ function updateChrome(forceBg) {
   $('#b-preview').classList.toggle('on', S.preview);
   const strip = $('#strip');
   if (own && S.preview) { strip.hidden = false; strip.className = 'status-strip preview'; strip.innerHTML = `👁 Aperçu : vous voyez le mur comme vos élèves <button class="btn small" id="exit-prev">Quitter l'aperçu</button>`; $('#exit-prev').onclick = () => $('#b-preview').click(); }
-  else if (!own) { strip.hidden = false; strip.className = 'status-strip'; strip.textContent = w.studentMode === 'open' ? '🟢 Tu peux publier sur ce mur' : w.studentMode === 'review' ? '🟡 Tu peux publier : le professeur valide avant affichage' : '🔒 Les publications sont fermées pour le moment'; }
+  else if (!own) { strip.hidden = false; strip.className = 'status-strip'; strip.textContent = w.studentMode === 'closed' ? '🔒 Les publications sont fermées pour le moment' : (S.away && !w.keepOpen) ? "🔒 Le professeur n'est pas sur le mur : les publications sont fermées" : w.studentMode === 'open' ? '🟢 Tu peux publier sur ce mur' : '🟡 Tu peux publier : le professeur valide avant affichage'; }
+  else if (w.keepOpen && w.studentMode !== 'closed') { strip.hidden = false; strip.className = 'status-strip'; strip.textContent = '📌 Ce mur reste ouvert aux élèves même quand vous le quittez'; }
   else strip.hidden = true;
+  const kb = $('#b-keep'); if (kb) kb.classList.toggle('on', !!w.keepOpen);
   $('#fab').hidden = !canPost();
   const me = $('#b-me'); me.hidden = own; if (!own) me.innerHTML = `👤<span class="lbl"> ${esc(getName())}</span>`;
   updatePending();
@@ -1439,17 +1450,35 @@ window.addEventListener('resize', () => { const c = S.spotEl && $('.card', S.spo
 
 /* ---------------- notifications par e-mail ---------------- */
 const GAS_RE = /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/;
-const AWAY_MS = 5 * 60000;
-// Tant qu'une page de vos murs est affichée à l'écran, vous êtes « présent » : pas d'e-mail.
-function startPresence() {
-  if (S.presenceIv || S.demo) return;
-  const beat = () => { if (document.visibilityState === 'visible' && S.user && !S.user.anonymous) S.store.setPresence(S.user.uid).catch(() => { }); };
-  beat(); S.presenceIv = setInterval(beat, 2 * 60000);
-  document.addEventListener('visibilitychange', beat);
+const AWAY_MS = 2 * 60000;
+// Tant que la page d'un mur est ouverte chez l'enseignant, il est « présent » sur ce mur.
+// Dès qu'il la quitte (ou au plus tard 2 minutes après), les élèves ne peuvent plus publier,
+// sauf si le mur est réglé sur « 📌 Ouvert en mon absence ».
+function startWallPresence() {
+  stopWallPresence();
+  const w = S.wallId; S.presenceWall = w;
+  const beat = () => S.store.setPresence(w).catch(() => { });
+  beat(); S.presenceIv = setInterval(beat, 30000);
+  S.presenceVis = () => { if (document.visibilityState === 'visible') beat(); };
+  document.addEventListener('visibilitychange', S.presenceVis);
 }
+function stopWallPresence() {
+  if (!S.presenceWall) return;
+  clearInterval(S.presenceIv); document.removeEventListener('visibilitychange', S.presenceVis);
+  const w = S.presenceWall; S.presenceWall = null; S.presenceIv = null;
+  S.store.clearPresence(w).catch(() => { });
+}
+window.addEventListener('pagehide', stopWallPresence);
+window.addEventListener('pageshow', e => { if (e.persisted && S.isOwner && S.wall && !S.presenceWall) startWallPresence(); });
 function sendNotify(url, payload) { return fetch(url, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) }); }
 async function teacherAway() {
-  try { return Date.now() - (await S.store.getPresence(S.wall.ownerUid)) > AWAY_MS - 30000; } catch { return true; }
+  try { S.away = Date.now() - (await S.store.getPresence(S.wallId)) > AWAY_MS - 20000; } catch { S.away = true; }
+  return S.away;
+}
+// Vrai si un élève ne peut pas publier/commenter maintenant parce que l'enseignant a quitté le mur.
+async function blockedByAbsence() {
+  if (S.isOwner || S.wall?.keepOpen) return false;
+  const a = await teacherAway(); updateChrome(); return a;
 }
 function loadTeacher() {
   if (!S.user || S.user.anonymous) return Promise.resolve();
@@ -1465,7 +1494,7 @@ function ensureNotify() {
 async function notifyTeacher(post) {
   const n = S.wall?.notify; if (!n?.on || !GAS_RE.test(n.url || '')) return;
   const snippet = post.body || post.title || (post.url ? shortUrl(post.url) : '') || (TYPES[post.type]?.label || '');
-  sendNotify(n.url, { wall: S.wallId, title: S.wall.title, author: post.authorName, pending: post.status === 'pending', wasOpen: S.wall.studentMode === 'open', snippet: String(snippet).slice(0, 200), link: location.origin + location.pathname + '?w=' + S.wallId }).catch(() => { });
+  sendNotify(n.url, { wall: S.wallId, title: S.wall.title, author: post.authorName, pending: post.status === 'pending', keepOpen: true, snippet: String(snippet).slice(0, 200), link: location.origin + location.pathname + '?w=' + S.wallId }).catch(() => { });
 }
 function openNotifyHelp() {
   const code = $('#gas-code').textContent.trim();
@@ -1618,8 +1647,9 @@ async function savePost(type, d, media, post, opts) {
   else {
     if (!owner && S.wall.studentMode === 'closed') fail('Les publications sont fermées pour le moment.');
     const now = Date.now();
-    const away = !owner && await teacherAway();
-    const full = { ...base, authorUid: S.user.uid, authorName: getName() || 'Élève', status: owner ? 'approved' : ((S.wall.studentMode === 'review' || away) ? 'pending' : 'approved'), hidden: !!base.hidden, likes: {}, cc: 0, createdAt: now, order: now };
+    if (await blockedByAbsence()) fail('🔒 Le professeur n\'est pas sur le mur : les publications sont fermées pour le moment.');
+    const away = !owner && !!S.wall.keepOpen && await teacherAway();
+    const full = { ...base, authorUid: S.user.uid, authorName: getName() || 'Élève', status: owner ? 'approved' : (S.wall.studentMode === 'review' ? 'pending' : 'approved'), hidden: !!base.hidden, likes: {}, cc: 0, createdAt: now, order: now };
     if (away) full.auto = true;
     if ((S.wall.format || 'columns') === 'free') {
       const sc = $('#scroll'), s = S.scale, isW = !!TYPES[type].widget;
@@ -1629,17 +1659,14 @@ async function savePost(type, d, media, post, opts) {
       full.y = Math.round((sc.scrollTop + sc.clientHeight / 3) / s + (Math.random() * 60 - 30));
       if (S.mobile) { full.x = 40; full.y = Math.max(0, ...S.posts.map(p => (p.y || 0) + (p.h || 300))) + 30; }
     }
-    let quarantined = !!full.auto;
     try { await S.store.addPost(S.wallId, clean(full)); }
     catch (e) {
-      // Le serveur a jugé le professeur absent : on réessaie en « à valider ».
-      if (owner || full.status !== 'approved' || !String(e?.code || '').includes('permission-denied')) throw e;
-      Object.assign(full, { status: 'pending', auto: true }); quarantined = true;
-      await S.store.addPost(S.wallId, clean(full));
+      // Le serveur a refusé : en général parce que le professeur vient de quitter le mur.
+      if (!owner && String(e?.code || '').includes('permission-denied')) { S.away = true; updateChrome(); fail('🔒 Le professeur n\'est pas sur le mur : les publications sont fermées pour le moment.'); }
+      throw e;
     }
-    if (!owner && quarantined) notifyTeacher(full);
-    if (quarantined) toast("Le professeur n'est pas connecté : ta publication s'affichera quand il l'aura validée. ⏳", 'ok');
-    else if (full.status === 'pending') toast('Envoyé ! Ta publication attend la validation du professeur. ⏳', 'ok');
+    if (away) notifyTeacher(full);
+    if (full.status === 'pending') toast('Envoyé ! Ta publication attend la validation du professeur. ⏳', 'ok');
     if (type === 'embed' && d.saveLib && owner) { const games = [...(S.teacher.games || []).filter(g => g.url !== base.url), { title: base.title || hostOf(base.url), url: base.url }]; S.teacher.games = games; guard(() => S.store.saveTeacher(S.user.uid, { games })); }
   }
 }
@@ -1660,7 +1687,7 @@ function openComments(p) {
     L.scrollTop = L.scrollHeight;
   });
   const f = $('.cm-form', root);
-  if (f) { setTimeout(() => f.t.focus(), 50); f.onsubmit = async e => { e.preventDefault(); if (!commentsOpen()) return toast('🔒 Les commentaires sont fermés pour le moment.', 'err'); const t = f.t.value.trim(); if (!t) return; if (!S.isOwner && await teacherAway()) return toast("🔒 Les commentaires sont fermés quand le professeur n'est pas connecté.", 'err'); f.t.value = ''; guard(() => S.store.addComment(S.wallId, p.id, { text: t, authorUid: S.user.uid, authorName: getName() || 'Élève', createdAt: Date.now() })); }; }
+  if (f) { setTimeout(() => f.t.focus(), 50); f.onsubmit = async e => { e.preventDefault(); if (!commentsOpen()) return toast('🔒 Les commentaires sont fermés pour le moment.', 'err'); const t = f.t.value.trim(); if (!t) return; if (await blockedByAbsence()) return toast("🔒 Le professeur n'est pas sur le mur : les commentaires sont fermés pour le moment.", 'err'); f.t.value = ''; guard(() => S.store.addComment(S.wallId, p.id, { text: t, authorUid: S.user.uid, authorName: getName() || 'Élève', createdAt: Date.now() })); }; }
 }
 
 /* ---------------- modération ---------------- */
@@ -1732,9 +1759,9 @@ function openSettings() {
       pane.innerHTML = `<label class="f">Titre</label><input id="s-title" maxlength="80" value="${esc(w.title)}"><label class="f">Sous-titre</label><input id="s-sub" maxlength="120" value="${esc(w.subtitle || '')}"><label class="f">Format</label>${formatsHTML(w.format || 'columns', 'sfmt')}
         <label class="chk"><input type="checkbox" id="s-likes" ${w.allowLikes !== false ? 'checked' : ''}> Autoriser les « j'aime » ❤️</label><label class="chk"><input type="checkbox" id="s-cm" ${w.allowComments !== false ? 'checked' : ''}> Autoriser les commentaires 💬</label><label class="chk"><input type="checkbox" id="s-auth" ${w.showAuthors !== false ? 'checked' : ''}> Afficher le prénom des élèves sur leurs publications</label>
         <h3 style="margin:1.4em 0 .2em">📧 Notifications par e-mail</h3>
-        <label class="chk"><input type="checkbox" id="s-notif" ${w.notify?.on ? 'checked' : ''}> M'envoyer un e-mail à chaque publication faite en mon absence</label>
+        <label class="chk"><input type="checkbox" id="s-notif" ${w.notify?.on ? 'checked' : ''}> M'envoyer un e-mail à chaque publication faite en mon absence (murs laissés ouverts avec 📌)</label>
         <label class="f">Adresse de votre script Google</label><div class="copy-row"><input id="s-nurl" inputmode="url" placeholder="https://script.google.com/macros/s/…/exec" value="${esc(w.notify?.url || S.teacher?.notifyUrl || '')}"><button type="button" class="btn" id="s-ntest">Tester</button></div>
-        <p class="small muted" style="margin:.5em 0 0"><a href="#" id="s-nhelp">Comment obtenir cette adresse ? (5 minutes, une seule fois)</a> </p><p class="small muted" style="margin:.4em 0 0">🔒 Quoi qu'il arrive, en votre absence (aucune page de vos murs affichée depuis 5 min), les publications des élèves sont mises en attente et les commentaires refusés.</p>`;
+        <p class="small muted" style="margin:.5em 0 0"><a href="#" id="s-nhelp">Comment obtenir cette adresse ? (5 minutes, une seule fois)</a> </p><p class="small muted" style="margin:.4em 0 0">🔒 Dès que vous quittez un mur, les élèves ne peuvent plus ni publier ni commenter, sauf si vous avez activé 📌 « Ouvert en mon absence ».</p>`;
       $('#s-nhelp', pane).onclick = e => { e.preventDefault(); openNotifyHelp(); };
       $('#s-ntest', pane).onclick = () => { const u = $('#s-nurl', pane).value.trim(); if (!GAS_RE.test(u)) return toast("Adresse invalide : elle commence par https://script.google.com/macros/s/ et finit par /exec", 'err'); sendNotify(u, { test: true }).catch(() => { }); toast("E-mail de test envoyé : vérifiez votre boîte Gmail d'ici une minute (et les spams).", 'ok'); };
     } else if (tab === 'bg') {
@@ -1788,7 +1815,7 @@ async function boot() {
   try { S.store = S.demo ? makeDemoStore() : await makeFirebaseStore(); }
   catch (e) { console.error(e); return viewFatal(); }
   let first = true;
-  S.store.onAuth(u => { const changed = first || S.user?.uid !== u?.uid; S.user = u; first = false; if (u && !u.anonymous) { startPresence(); loadTeacher(); } if (changed) route(); });
+  S.store.onAuth(u => { const changed = first || S.user?.uid !== u?.uid; S.user = u; first = false; if (u && !u.anonymous) loadTeacher(); if (changed) route(); });
 }
 boot();
 </script>
