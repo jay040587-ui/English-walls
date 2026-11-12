@@ -304,6 +304,57 @@ audio{width:100%;margin:.3em 0;display:block}
 <body>
 <div id="app"><div class="loading">🧱 English Walls…</div></div>
 <div id="toast"></div>
+<script type="text/plain" id="gas-code">// English Walls — e-mails de notification
+// 1) Collez ce code à la place de tout le contenu, puis enregistrez (💾).
+// 2) Déployer > Nouveau déploiement > Application Web
+//    Exécuter en tant que : Moi · Qui a accès : Tout le monde
+var PAUSE_MINUTES = 0;    // 0 = un e-mail à chaque publication (mettre 15 pour regrouper)
+var MAX_PAR_JOUR = 90;    // sécurité : Gmail autorise 100 e-mails par jour
+
+function doPost(e) {
+  var lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(10000);
+    var d = JSON.parse((e && e.postData && e.postData.contents) || '{}');
+    var props = PropertiesService.getScriptProperties();
+    var cache = CacheService.getScriptCache();
+    var jour = Utilities.formatDate(new Date(), 'Europe/Paris', 'yyyy-MM-dd');
+    var envoyes = Number(props.getProperty('jour-' + jour) || 0);
+    if (envoyes >= MAX_PAR_JOUR) return reponse('quota');
+    var mur = String(d.wall || '').replace(/[^A-Za-z0-9]/g, '').slice(0, 10);
+    if (!d.test && PAUSE_MINUTES > 0 && cache.get('pause-' + mur)) {
+      cache.put('plus-' + mur, String(Number(cache.get('plus-' + mur) || 0) + 1), 21600);
+      return reponse('regroupe');
+    }
+    var plus = Number(cache.get('plus-' + mur) || 0);
+    cache.remove('plus-' + mur);
+    var titre = court(d.title, 80), auteur = court(d.author, 30) || 'Un élève';
+    var sujet, corps;
+    if (d.test) {
+      sujet = '✅ English Walls : les notifications fonctionnent';
+      corps = "Vous recevrez un e-mail quand un élève publie pendant que vous n'êtes pas sur vos murs.";
+    } else {
+      sujet = '⚠️ ' + titre + ' : publication de ' + auteur + ' en votre absence';
+      corps = auteur + ' vient de publier sur le mur « ' + titre + ' » (' + mur + ') pendant que vous n\'étiez pas connecté.\n';
+      if (d.pending) corps += '\n🔒 Elle a été mise en attente automatiquement : personne ne la voit tant que vous ne l\'avez pas validée.\n';
+      if (d.wasOpen) corps += '👉 Les publications de ce mur sont restées ouvertes : pensez à cliquer sur « 🔒 Fermé ».\n';
+      if (d.snippet) corps += '\n« ' + court(d.snippet, 200) + ' »\n';
+      if (plus) corps += '\n(+ ' + plus + " autre(s) publication(s) depuis l'e-mail précédent)\n";
+      if (/^https:\/\//.test(d.link || '')) corps += '\nOuvrir le mur : ' + court(d.link, 300);
+    }
+    MailApp.sendEmail(Session.getEffectiveUser().getEmail(), sujet, corps);
+    props.setProperty('jour-' + jour, String(envoyes + 1));
+    if (!d.test && PAUSE_MINUTES > 0) cache.put('pause-' + mur, '1', PAUSE_MINUTES * 60);
+    return reponse('ok');
+  } catch (err) {
+    return reponse('erreur');
+  } finally {
+    try { lock.releaseLock(); } catch (x) {}
+  }
+}
+function court(s, n) { return String(s || '').replace(/\s+/g, ' ').trim().slice(0, n); }
+function reponse(t) { return ContentService.createTextOutput(t); }
+</script>
 <script type="module">
 /* =====================================================================
    ENGLISH WALLS — mur collaboratif pour la classe d'anglais
@@ -696,7 +747,7 @@ async function makeFirebaseStore() {
   const app = A.initializeApp(firebaseConfig);
   const auth = Au.getAuth(app);
   const db = F.getFirestore(app);
-  const { doc, collection, query, where, onSnapshot, setDoc, updateDoc, deleteDoc, addDoc, getDoc, getDocs, writeBatch, deleteField, increment } = F;
+  const { doc, collection, query, where, onSnapshot, setDoc, updateDoc, deleteDoc, addDoc, getDoc, getDocs, writeBatch, deleteField, increment, serverTimestamp } = F;
   const wallRef = id => doc(db, 'walls', id), postsCol = w => collection(db, 'walls', w, 'posts'), postRef = (w, p) => doc(db, 'walls', w, 'posts', p), cmCol = (w, p) => collection(db, 'walls', w, 'posts', p, 'comments');
   const mapU = u => u ? { uid: u.uid, anonymous: u.isAnonymous, name: u.displayName || '', email: u.email || '', photo: u.photoURL || '' } : null;
   const onErr = e => { console.error(e); toast(errMsg(e), 'err'); };
@@ -734,6 +785,8 @@ async function makeFirebaseStore() {
     async deleteComment(w, p, c) { await deleteDoc(doc(db, 'walls', w, 'posts', p, 'comments', c)); await updateDoc(postRef(w, p), { cc: increment(-1) }).catch(() => {}); },
     async getTeacher(uid) { const s = await getDoc(doc(db, 'teachers', uid)); return s.exists() ? s.data() : { games: [] }; },
     saveTeacher: (uid, data) => setDoc(doc(db, 'teachers', uid), data, { merge: true }),
+    setPresence: uid => setDoc(doc(db, 'presence', uid), { lastSeen: serverTimestamp() }),
+    async getPresence(uid) { const s = await getDoc(doc(db, 'presence', uid)); const v = s.exists() ? s.data().lastSeen : 0; return typeof v === 'number' ? v : (v?.toMillis?.() || 0); },
   };
 }
 
@@ -769,6 +822,7 @@ function makeDemoStore() {
     deleteComment: async (w, p, c) => { delete db.comments[c]; if (db.posts[p]) db.posts[p].cc = Math.max(0, (db.posts[p].cc || 1) - 1); emit(); },
     getTeacher: async uid => clone(db.teachers[uid] || { games: [] }),
     saveTeacher: async (uid, data) => { db.teachers[uid] = { ...(db.teachers[uid] || {}), ...clone(data) }; emit(); },
+    setPresence: async () => { }, getPresence: async () => 0,
   };
 }
 function seedDemo(db) {
@@ -815,7 +869,7 @@ function modal({ title, body, actions = [], wide = false, onClose }) {
   if (typeof body === 'string') bodyEl.innerHTML = body; else if (body) bodyEl.appendChild(body);
   const act = $('.modal-actions', back);
   let closed = false;
-  const onKey = e => { if (e.key === 'Escape') close(); };
+  const onKey = e => { if (e.key === 'Escape' && back === $$('.modal-back').at(-1)) close(); };
   const close = () => { if (closed) return; closed = true; back.remove(); document.removeEventListener('keydown', onKey); onClose && onClose(); };
   document.addEventListener('keydown', onKey);
   actions.forEach(a => {
@@ -957,7 +1011,7 @@ function openCreateWall() {
         let code = ''; for (let i = 0; i < 6; i++) { const c = genCode(); if (!(await S.store.wallExists(c))) { code = c; break; } }
         if (!code) fail('Impossible de générer un code, réessayez.');
         const now = Date.now();
-        await S.store.createWall(code, { title, subtitle: $('#c-sub', el).value.trim(), ownerUid: S.user.uid, ownerName: S.user.name || '', format, bg, bgImage: null, bgDim: 0, sections: [{ id: 's1', title: '📌 Today' }, { id: 's2', title: '📚 Vocabulary' }, { id: 's3', title: '✍️ Your turn!' }], studentMode: 'closed', allowComments: true, allowLikes: true, showAuthors: true, createdAt: now, updatedAt: now });
+        await S.store.createWall(code, { title, subtitle: $('#c-sub', el).value.trim(), ownerUid: S.user.uid, ownerName: S.user.name || '', format, bg, bgImage: null, bgDim: 0, sections: [{ id: 's1', title: '📌 Today' }, { id: 's2', title: '📚 Vocabulary' }, { id: 's3', title: '✍️ Your turn!' }], studentMode: 'closed', allowComments: true, allowLikes: true, showAuthors: true, ...(GAS_RE.test(S.teacher?.notifyUrl || '') ? { notify: { on: true, url: S.teacher.notifyUrl } } : {}), createdAt: now, updatedAt: now });
         setTimeout(() => go('w=' + code), 0);
       }
     }]
@@ -1010,7 +1064,7 @@ function onWall(w) {
   S.isOwner = !!S.user && w.ownerUid === S.user.uid;
   if (first) {
     S.unsubs.push(S.store.watchPosts(S.wallId, { owner: S.isOwner, uid: S.user.uid }, list => { S.posts = list; S.postsLoaded = true; renderPosts(); renderTray(); checkSpot(); }));
-    if (S.isOwner) S.store.getTeacher(S.user.uid).then(t => { S.teacher = { games: [], ...(t || {}) }; }).catch(() => { });
+    if (S.isOwner) loadTeacher().then(ensureNotify);
   }
   updateChrome(); renderPosts(); checkSpot();
 }
@@ -1371,6 +1425,53 @@ function checkSpot() {
 }
 window.addEventListener('resize', () => { const c = S.spotEl && $('.card', S.spotEl); if (c) fitCard(c); });
 
+/* ---------------- notifications par e-mail ---------------- */
+const GAS_RE = /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/;
+const AWAY_MS = 5 * 60000;
+// Tant qu'une page de vos murs est affichée à l'écran, vous êtes « présent » : pas d'e-mail.
+function startPresence() {
+  if (S.presenceIv || S.demo) return;
+  const beat = () => { if (document.visibilityState === 'visible' && S.user && !S.user.anonymous) S.store.setPresence(S.user.uid).catch(() => { }); };
+  beat(); S.presenceIv = setInterval(beat, 2 * 60000);
+  document.addEventListener('visibilitychange', beat);
+}
+function sendNotify(url, payload) { return fetch(url, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) }); }
+async function teacherAway() {
+  try { return Date.now() - (await S.store.getPresence(S.wall.ownerUid)) > AWAY_MS - 30000; } catch { return true; }
+}
+function loadTeacher() {
+  if (!S.user || S.user.anonymous) return Promise.resolve();
+  return S.store.getTeacher(S.user.uid).then(t => { S.teacher = { games: [], ...(t || {}) }; }).catch(() => { });
+}
+// Active automatiquement les e-mails sur les murs qui n'ont encore aucun réglage.
+function ensureNotify() {
+  const u = S.teacher?.notifyUrl;
+  if (!S.isOwner || !S.wall || 'notify' in S.wall || !GAS_RE.test(u || '')) return;
+  S.wall.notify = { on: true, url: u };
+  guard(() => S.store.updateWall(S.wallId, { notify: { on: true, url: u } }));
+}
+async function notifyTeacher(post) {
+  const n = S.wall?.notify; if (!n?.on || !GAS_RE.test(n.url || '')) return;
+  const snippet = post.body || post.title || (post.url ? shortUrl(post.url) : '') || (TYPES[post.type]?.label || '');
+  sendNotify(n.url, { wall: S.wallId, title: S.wall.title, author: post.authorName, pending: post.status === 'pending', wasOpen: S.wall.studentMode === 'open', snippet: String(snippet).slice(0, 200), link: location.origin + location.pathname + '?w=' + S.wallId }).catch(() => { });
+}
+function openNotifyHelp() {
+  const code = $('#gas-code').textContent.trim();
+  const root = document.createElement('div');
+  root.innerHTML = `<p>Les e-mails partent de <b>votre propre compte Google</b>, gratuitement, grâce à un petit script. À faire une seule fois (5 minutes) :</p>
+  <ol style="line-height:1.6;padding-left:1.2em">
+    <li>Ouvrez <a href="https://script.google.com/home/projects/create" target="_blank" rel="noopener"><b>script.google.com</b></a> (nouveau projet), avec le même compte Google que vos murs.</li>
+    <li>Effacez tout, collez le code ci-dessous, puis cliquez sur 💾 <b>Enregistrer</b>.</li>
+    <li><b>Déployer</b> → <b>Nouveau déploiement</b> → roue ⚙️ → <b>Application Web</b>.<br>Exécuter en tant que : <b>Moi</b> · Qui a accès : <b>Tout le monde</b> → <b>Déployer</b>.</li>
+    <li>Cliquez sur <b>Autoriser l'accès</b>. Si Google affiche « application non validée » : <b>Paramètres avancés</b> → <b>Accéder au projet</b> (c'est votre propre script).</li>
+    <li>Copiez l'<b>URL de l'application Web</b> (elle finit par <code>/exec</code>) et collez-la dans les réglages du mur, puis <b>Tester</b>.</li>
+  </ol>
+  <div class="copy-row" style="margin:6px 0"><button class="btn primary" id="gas-copy">📋 Copier le code</button></div>
+  <textarea readonly style="min-height:220px;font-family:ui-monospace,Menlo,monospace;font-size:.8rem">${esc(code)}</textarea>`;
+  modal({ title: '📧 Activer les e-mails', body: root, wide: true });
+  $('#gas-copy', root).onclick = async () => { try { await navigator.clipboard.writeText(code); } catch { const t = $('textarea', root); t.select(); document.execCommand('copy'); } toast('Code copié ✓', 'ok'); };
+}
+
 /* ---------------- éditeur de publication ---------------- */
 function fieldsHTML(type, d, owner) {
   const T = (ph = 'Titre (facultatif)') => `<label class="f">Titre</label><input name="title" maxlength="140" value="${esc(d.title || '')}" placeholder="${esc(ph)}">`;
@@ -1505,7 +1606,9 @@ async function savePost(type, d, media, post, opts) {
   else {
     if (!owner && S.wall.studentMode === 'closed') fail('Les publications sont fermées pour le moment.');
     const now = Date.now();
-    const full = { ...base, authorUid: S.user.uid, authorName: getName() || 'Élève', status: owner ? 'approved' : (S.wall.studentMode === 'review' ? 'pending' : 'approved'), hidden: !!base.hidden, likes: {}, cc: 0, createdAt: now, order: now };
+    const away = !owner && await teacherAway();
+    const full = { ...base, authorUid: S.user.uid, authorName: getName() || 'Élève', status: owner ? 'approved' : ((S.wall.studentMode === 'review' || away) ? 'pending' : 'approved'), hidden: !!base.hidden, likes: {}, cc: 0, createdAt: now, order: now };
+    if (away) full.auto = true;
     if ((S.wall.format || 'columns') === 'free') {
       const sc = $('#scroll'), s = S.scale, isW = !!TYPES[type].widget;
       full.w = ['quizlet', 'embed'].includes(type) ? 520 : type === 'youtube' ? 420 : isW ? 340 : 300;
@@ -1514,8 +1617,17 @@ async function savePost(type, d, media, post, opts) {
       full.y = Math.round((sc.scrollTop + sc.clientHeight / 3) / s + (Math.random() * 60 - 30));
       if (S.mobile) { full.x = 40; full.y = Math.max(0, ...S.posts.map(p => (p.y || 0) + (p.h || 300))) + 30; }
     }
-    await S.store.addPost(S.wallId, clean(full));
-    if (full.status === 'pending') toast('Envoyé ! Ta publication attend la validation du professeur. ⏳', 'ok');
+    let quarantined = !!full.auto;
+    try { await S.store.addPost(S.wallId, clean(full)); }
+    catch (e) {
+      // Le serveur a jugé le professeur absent : on réessaie en « à valider ».
+      if (owner || full.status !== 'approved' || !String(e?.code || '').includes('permission-denied')) throw e;
+      Object.assign(full, { status: 'pending', auto: true }); quarantined = true;
+      await S.store.addPost(S.wallId, clean(full));
+    }
+    if (!owner && quarantined) notifyTeacher(full);
+    if (quarantined) toast("Le professeur n'est pas connecté : ta publication s'affichera quand il l'aura validée. ⏳", 'ok');
+    else if (full.status === 'pending') toast('Envoyé ! Ta publication attend la validation du professeur. ⏳', 'ok');
     if (type === 'embed' && d.saveLib && owner) { const games = [...(S.teacher.games || []).filter(g => g.url !== base.url), { title: base.title || hostOf(base.url), url: base.url }]; S.teacher.games = games; guard(() => S.store.saveTeacher(S.user.uid, { games })); }
   }
 }
@@ -1536,7 +1648,7 @@ function openComments(p) {
     L.scrollTop = L.scrollHeight;
   });
   const f = $('.cm-form', root);
-  if (f) { setTimeout(() => f.t.focus(), 50); f.onsubmit = e => { e.preventDefault(); if (!commentsOpen()) return toast('🔒 Les commentaires sont fermés pour le moment.', 'err'); const t = f.t.value.trim(); if (!t) return; f.t.value = ''; guard(() => S.store.addComment(S.wallId, p.id, { text: t, authorUid: S.user.uid, authorName: getName() || 'Élève', createdAt: Date.now() })); }; }
+  if (f) { setTimeout(() => f.t.focus(), 50); f.onsubmit = async e => { e.preventDefault(); if (!commentsOpen()) return toast('🔒 Les commentaires sont fermés pour le moment.', 'err'); const t = f.t.value.trim(); if (!t) return; if (!S.isOwner && await teacherAway()) return toast("🔒 Les commentaires sont fermés quand le professeur n'est pas connecté.", 'err'); f.t.value = ''; guard(() => S.store.addComment(S.wallId, p.id, { text: t, authorUid: S.user.uid, authorName: getName() || 'Élève', createdAt: Date.now() })); }; }
 }
 
 /* ---------------- modération ---------------- */
@@ -1554,7 +1666,7 @@ function renderTray() {
   const pend = S.posts.filter(p => p.status === 'pending').sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
   t.innerHTML = `<div class="tray-head"><h3>📥 À valider (${pend.length})</h3><button class="x" title="Fermer">✕</button></div>
     ${pend.length > 1 ? '<div class="tray-actions"><button class="btn small blue" id="ok-all">✓ Tout valider</button></div>' : ''}
-    <div class="tray-list">${pend.length ? pend.map(p => `<div class="tray-item" data-id="${esc(p.id)}"><div class="ti-meta"><b>${esc(p.authorName || 'Élève')}</b> · ${TYPES[p.type]?.icon || ''} ${esc(TYPES[p.type]?.label || '')}</div><div class="ti-prev">${previewHTML(p)}</div><div class="ti-btns"><button class="btn small blue" data-t="ok">✓ Valider</button><button class="btn small" data-t="hide">✓ Valider, mais cacher</button><button class="btn small danger" data-t="no">✕ Refuser</button></div></div>`).join('') : '<p class="muted">Rien en attente 🎉</p>'}</div>`;
+    <div class="tray-list">${pend.length ? pend.map(p => `<div class="tray-item" data-id="${esc(p.id)}"><div class="ti-meta"><b>${esc(p.authorName || 'Élève')}</b> · ${TYPES[p.type]?.icon || ''} ${esc(TYPES[p.type]?.label || '')}${p.auto ? ' · <span class="badge b-hidden">🔒 publiée en votre absence</span>' : ''}</div><div class="ti-prev">${previewHTML(p)}</div><div class="ti-btns"><button class="btn small blue" data-t="ok">✓ Valider</button><button class="btn small" data-t="hide">✓ Valider, mais cacher</button><button class="btn small danger" data-t="no">✕ Refuser</button></div></div>`).join('') : '<p class="muted">Rien en attente 🎉</p>'}</div>`;
   $('.x', t).onclick = toggleTray;
   const all = $('#ok-all', t); if (all) all.onclick = () => guard(() => S.store.batchUpdate(S.wallId, pend.map(p => p.id), { status: 'approved' }));
   $$('.tray-item', t).forEach(it => $$('[data-t]', it).forEach(b => b.onclick = async () => {
@@ -1599,14 +1711,20 @@ function openSettings() {
   const pane = $('.pane', root);
   const preview = () => { const b = $('#board'); if (b) b.style.background = wallBgCss(w); };
   function read() {
-    if (tab === 'gen') { w.title = $('#s-title', pane).value; w.subtitle = $('#s-sub', pane).value; w.format = $('input[name=sfmt]:checked', pane).value; w.allowLikes = $('#s-likes', pane).checked; w.allowComments = $('#s-cm', pane).checked; w.showAuthors = $('#s-auth', pane).checked; }
+    if (tab === 'gen') { w.title = $('#s-title', pane).value; w.subtitle = $('#s-sub', pane).value; w.format = $('input[name=sfmt]:checked', pane).value; w.allowLikes = $('#s-likes', pane).checked; w.allowComments = $('#s-cm', pane).checked; w.showAuthors = $('#s-auth', pane).checked; w.notify = { on: $('#s-notif', pane).checked, url: $('#s-nurl', pane).value.trim() }; }
     if (tab === 'sec') { $$('.sec-row input', pane).forEach((i, k) => { if (w.sections[k]) w.sections[k].title = i.value; }); }
   }
   function draw() {
     $$('.tabs button', root).forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
     if (tab === 'gen') {
       pane.innerHTML = `<label class="f">Titre</label><input id="s-title" maxlength="80" value="${esc(w.title)}"><label class="f">Sous-titre</label><input id="s-sub" maxlength="120" value="${esc(w.subtitle || '')}"><label class="f">Format</label>${formatsHTML(w.format || 'columns', 'sfmt')}
-        <label class="chk"><input type="checkbox" id="s-likes" ${w.allowLikes !== false ? 'checked' : ''}> Autoriser les « j'aime » ❤️</label><label class="chk"><input type="checkbox" id="s-cm" ${w.allowComments !== false ? 'checked' : ''}> Autoriser les commentaires 💬</label><label class="chk"><input type="checkbox" id="s-auth" ${w.showAuthors !== false ? 'checked' : ''}> Afficher le prénom des élèves sur leurs publications</label>`;
+        <label class="chk"><input type="checkbox" id="s-likes" ${w.allowLikes !== false ? 'checked' : ''}> Autoriser les « j'aime » ❤️</label><label class="chk"><input type="checkbox" id="s-cm" ${w.allowComments !== false ? 'checked' : ''}> Autoriser les commentaires 💬</label><label class="chk"><input type="checkbox" id="s-auth" ${w.showAuthors !== false ? 'checked' : ''}> Afficher le prénom des élèves sur leurs publications</label>
+        <h3 style="margin:1.4em 0 .2em">📧 Notifications par e-mail</h3>
+        <label class="chk"><input type="checkbox" id="s-notif" ${w.notify?.on ? 'checked' : ''}> M'envoyer un e-mail à chaque publication faite en mon absence</label>
+        <label class="f">Adresse de votre script Google</label><div class="copy-row"><input id="s-nurl" inputmode="url" placeholder="https://script.google.com/macros/s/…/exec" value="${esc(w.notify?.url || S.teacher?.notifyUrl || '')}"><button type="button" class="btn" id="s-ntest">Tester</button></div>
+        <p class="small muted" style="margin:.5em 0 0"><a href="#" id="s-nhelp">Comment obtenir cette adresse ? (5 minutes, une seule fois)</a> </p><p class="small muted" style="margin:.4em 0 0">🔒 Quoi qu'il arrive, en votre absence (aucune page de vos murs affichée depuis 5 min), les publications des élèves sont mises en attente et les commentaires refusés.</p>`;
+      $('#s-nhelp', pane).onclick = e => { e.preventDefault(); openNotifyHelp(); };
+      $('#s-ntest', pane).onclick = () => { const u = $('#s-nurl', pane).value.trim(); if (!GAS_RE.test(u)) return toast("Adresse invalide : elle commence par https://script.google.com/macros/s/ et finit par /exec", 'err'); sendNotify(u, { test: true }).catch(() => { }); toast("E-mail de test envoyé : vérifiez votre boîte Gmail d'ici une minute (et les spams).", 'ok'); };
     } else if (tab === 'bg') {
       pane.innerHTML = `<div id="gal"></div><label class="f">Assombrir le fond (meilleure lisibilité) : <span id="dimv">${w.bgDim || 0}</span> %</label><input type="range" id="dim" min="0" max="70" step="5" value="${w.bgDim || 0}"><label class="f">Ou votre propre image</label><div class="row2"><div><label class="btn wide" for="bgf">📁 Choisir une image…</label><input type="file" id="bgf" accept="image/*" hidden></div><div class="muted small">${w.bg === 'custom' ? '✓ Image personnalisée active' : ''}</div></div>`;
       galleryInto($('#gal', pane), w.bg, v => { w.bg = v; preview(); });
@@ -1634,6 +1752,12 @@ function openSettings() {
         read(); if (!(w.title || '').trim()) fail('Il faut un titre.');
         w.sections = w.sections.map(s => ({ ...s, title: s.title.trim() || 'Column' }));
         const patch = { title: w.title.trim(), subtitle: (w.subtitle || '').trim(), format: w.format, allowComments: !!w.allowComments, allowLikes: !!w.allowLikes, showAuthors: !!w.showAuthors, bg: w.bg, bgImage: w.bg === 'custom' ? (w.bgImage || null) : null, bgDim: +w.bgDim || 0, sections: w.sections, updatedAt: Date.now() };
+        if (w.notify) {
+          const u = w.notify.url || '';
+          if (w.notify.on && !GAS_RE.test(u)) fail("Adresse du script invalide : elle commence par https://script.google.com/macros/s/ et finit par /exec");
+          patch.notify = { on: !!w.notify.on && GAS_RE.test(u), url: GAS_RE.test(u) ? u : '' };
+          if (GAS_RE.test(u) && u !== S.teacher?.notifyUrl) { S.teacher = { ...(S.teacher || {}), notifyUrl: u }; guard(() => S.store.saveTeacher(S.user.uid, { notifyUrl: u })); }
+        }
         await S.store.updateWall(S.wallId, patch); toast('Réglages enregistrés ✓', 'ok');
       }
     }]
@@ -1652,7 +1776,7 @@ async function boot() {
   try { S.store = S.demo ? makeDemoStore() : await makeFirebaseStore(); }
   catch (e) { console.error(e); return viewFatal(); }
   let first = true;
-  S.store.onAuth(u => { const changed = first || S.user?.uid !== u?.uid; S.user = u; first = false; if (changed) route(); });
+  S.store.onAuth(u => { const changed = first || S.user?.uid !== u?.uid; S.user = u; first = false; if (u && !u.anonymous) { startPresence(); loadTeacher(); } if (changed) route(); });
 }
 boot();
 </script>
