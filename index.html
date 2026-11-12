@@ -347,9 +347,21 @@ function doPost(e) {
     if (!d.test && PAUSE_MINUTES > 0) cache.put('pause-' + mur, '1', PAUSE_MINUTES * 60);
     return reponse('ok');
   } catch (err) {
+    console.error(err);
     return reponse('erreur');
   } finally {
     try { lock.releaseLock(); } catch (x) {}
+  }
+}
+// Diagnostic : ouvrez l'adresse du script suivie de ?test=1 dans votre navigateur.
+function doGet(e) {
+  if (!e || !e.parameter || !e.parameter.test) return reponse('English Walls : le script est bien en ligne ✅');
+  try {
+    var moi = Session.getEffectiveUser().getEmail();
+    MailApp.sendEmail(moi, '✅ English Walls : les notifications fonctionnent', 'E-mail de test envoyé depuis votre navigateur.');
+    return reponse('✅ E-mail de test envoyé à ' + moi + '. Il reste ' + MailApp.getRemainingDailyQuota() + ' e-mails possibles aujourd\'hui.');
+  } catch (err) {
+    return reponse('❌ Erreur : ' + err.message);
   }
 }
 function court(s, n) { return String(s || '').replace(/\s+/g, ' ').trim().slice(0, n); }
