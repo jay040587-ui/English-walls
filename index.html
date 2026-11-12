@@ -1446,7 +1446,7 @@ function loadTeacher() {
 // Active automatiquement les e-mails sur les murs qui n'ont encore aucun réglage.
 function ensureNotify() {
   const u = S.teacher?.notifyUrl;
-  if (!S.isOwner || !S.wall || 'notify' in S.wall || !GAS_RE.test(u || '')) return;
+  if (!S.isOwner || !S.wall || !GAS_RE.test(u || '') || (S.wall.notify && GAS_RE.test(S.wall.notify.url || ''))) return;
   S.wall.notify = { on: true, url: u };
   guard(() => S.store.updateWall(S.wallId, { notify: { on: true, url: u } }));
 }
@@ -1752,7 +1752,7 @@ function openSettings() {
         read(); if (!(w.title || '').trim()) fail('Il faut un titre.');
         w.sections = w.sections.map(s => ({ ...s, title: s.title.trim() || 'Column' }));
         const patch = { title: w.title.trim(), subtitle: (w.subtitle || '').trim(), format: w.format, allowComments: !!w.allowComments, allowLikes: !!w.allowLikes, showAuthors: !!w.showAuthors, bg: w.bg, bgImage: w.bg === 'custom' ? (w.bgImage || null) : null, bgDim: +w.bgDim || 0, sections: w.sections, updatedAt: Date.now() };
-        if (w.notify) {
+        if (w.notify && (w.notify.on || w.notify.url)) {
           const u = w.notify.url || '';
           if (w.notify.on && !GAS_RE.test(u)) fail("Adresse du script invalide : elle commence par https://script.google.com/macros/s/ et finit par /exec");
           patch.notify = { on: !!w.notify.on && GAS_RE.test(u), url: GAS_RE.test(u) ? u : '' };
