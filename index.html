@@ -114,7 +114,64 @@ label.chk input{width:20px;height:20px;accent-color:var(--accent);flex:none}
 .f-wall .list{column-width:calc(300px*var(--scale));column-gap:calc(16px*var(--scale));padding:calc(18px*var(--scale))}
 .f-wall .card{display:inline-block;width:100%;margin-bottom:calc(16px*var(--scale));break-inside:avoid;vertical-align:top}
 .f-grid .list{display:grid;grid-template-columns:repeat(auto-fill,minmax(calc(290px*var(--scale)),1fr));gap:calc(16px*var(--scale));padding:calc(18px*var(--scale));align-items:start}
-.f-grid .card.sz-L{grid-column:span 2}
+.f-grid .card.sz-L,.f-sheet .card.sz-L{grid-column:span 2}
+.f-sheet .list{display:grid;grid-template-columns:repeat(auto-fill,minmax(calc(290px*var(--scale)),1fr));gap:calc(16px*var(--scale));padding:calc(14px*var(--scale)) 0 0;align-items:start}
+.sheet-page{padding:calc(16px*var(--scale)) calc(18px*var(--scale)) 120px}
+.sheet-wrap{background:rgba(255,255,255,.98);border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.25);overflow:hidden;font-size:calc(1rem*var(--scale));color:#1f2335}
+.sheet-wrap:empty{display:none}
+.sheet-bar{display:flex;flex-wrap:wrap;gap:6px;padding:10px;border-bottom:1px solid #e6e8ef;background:#f7f8fb;align-items:center}
+.sheet-bar .btn{padding:.45em .9em;font-size:.9rem;box-shadow:none;border:1px solid #e1e4ee}
+.sheet-bar .sp{flex:1}
+.sheet-scroll{overflow:auto;max-height:calc(100vh - 210px);max-height:calc(100dvh - 210px)}
+table.sheet{border-collapse:separate;border-spacing:0;min-width:100%}
+.sheet th,.sheet td{border-right:1px solid #e3e6ee;border-bottom:1px solid #e3e6ee;padding:0;height:calc(42px*var(--scale));vertical-align:middle;background:#fff}
+.sheet thead th{position:sticky;top:0;z-index:3;background:var(--hc,#f3f4f8);font-family:Fredoka,Nunito,sans-serif;font-weight:600;text-align:left;padding:.4em .5em .4em .7em;border-bottom:2px solid #cfd5e3;white-space:nowrap;font-size:1.05em}
+.sheet thead th[data-col]{cursor:grab}
+.sheet .w-S{min-width:calc(90px*var(--scale));width:calc(90px*var(--scale))}.sheet .w-M{min-width:calc(160px*var(--scale))}.sheet .w-L{min-width:calc(250px*var(--scale))}.sheet .w-XL{min-width:calc(380px*var(--scale))}
+.sheet .rn{position:sticky;left:0;z-index:2;width:52px;min-width:52px;text-align:center;color:#9aa0b4;font-size:.8em;background:#f7f8fb!important;white-space:nowrap}
+.sheet thead .rn{z-index:5}
+.sheet .nm{position:sticky;left:52px;z-index:2;min-width:calc(220px*var(--scale));font-weight:700;padding:0 .7em;border-right:2px solid #cfd5e3}
+.sheet thead .nm{z-index:5;background:#eef1f8;cursor:pointer}
+.sheet td.cell{position:relative;cursor:cell;background:color-mix(in srgb,var(--hc,#fff) 28%,#fff)}
+.sheet td.nm.cell{background:#fff;position:sticky}
+.sheet td.sel{outline:2.5px solid #2563eb;outline-offset:-2px;z-index:4}
+.sheet .gap{width:14px;min-width:14px;background:transparent!important;border-top:0!important;border-bottom:0!important;border-right:0!important}
+.sheet .gap+th,.sheet .gap+td{border-left:1px solid #e3e6ee}
+.sheet .addc{background:transparent!important;border:0!important;padding:0 .5em!important;width:50px}
+.sheet .addc button{border:1.5px dashed #b8bfd0;background:#fff;border-radius:10px;width:34px;height:34px;font-size:1.1rem}
+.ch-in{display:flex;align-items:center;gap:6px}
+.ch-t{flex:1;overflow:hidden;text-overflow:ellipsis}
+.ch-m{border:0;background:rgba(0,0,0,.07);border-radius:8px;width:30px;height:30px;flex:none;font-weight:800}
+.ch-m:hover{background:rgba(0,0,0,.15)}
+.rh{cursor:grab;opacity:.4;margin-right:4px;touch-action:none;font-size:1.1em}
+.nm-t{display:block;padding-right:30px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rdel{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:#fee2e2;color:#b91c1c;border-radius:8px;width:26px;height:26px;opacity:0;font-size:.8rem}
+td.nm:hover .rdel,td.nm.sel .rdel{opacity:1}
+.cv{padding:.35em .65em;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.3}
+.cv.num{text-align:center;font-weight:800;font-size:1.1em}
+.tally{display:flex;flex-wrap:wrap;align-items:center;padding:.3em 4.4em .3em .55em;gap:1px;color:#1f2335}
+.tl{width:1.55em;height:1.2em;stroke:currentColor;stroke-width:2.3;stroke-linecap:round}
+.tn{font-weight:800;font-size:.8em;color:#6b7086;margin-left:.35em}
+.tb{position:absolute;right:5px;top:50%;transform:translateY(-50%);display:flex;gap:3px;opacity:0;transition:opacity .12s}
+.tb button{border:0;border-radius:8px;width:1.75em;height:1.75em;font-weight:900;background:#1f2335;color:#fff;line-height:1;font-size:.95em}
+.tb button:first-child{background:#e5e7eb;color:#1f2335}
+td.cell:hover .tb,td.sel .tb{opacity:1}
+.t-check,.t-status,.t-total{text-align:center}
+.ck{display:inline-flex;width:1.45em;height:1.45em;border:2px solid #9aa0b4;border-radius:6px;align-items:center;justify-content:center;font-weight:900;color:#fff;cursor:pointer;background:#fff}
+.ck.on{background:#16a34a;border-color:#16a34a}
+.st{font-size:1.35em;font-weight:800}
+.tot{display:inline-flex;align-items:center;gap:.3em;margin:0 .5em;padding:.25em .75em;border-radius:99px;background:color-mix(in srgb,var(--rc) 14%,#fff);color:var(--rc);font-weight:800;white-space:nowrap}
+.tot b{font-size:1.1em}
+.ced{position:absolute;left:-1px;top:-1px;z-index:6;width:calc(100% + 2px);min-width:200px;min-height:calc(100% + 2px);height:auto;border:2.5px solid #2563eb;border-radius:0;padding:.35em .65em;font:inherit;resize:vertical;box-shadow:0 10px 26px rgba(0,0,0,.2);background:#fff;outline:none}
+.t-text .ced{min-height:5em}
+.sheet-empty td{padding:34px 20px!important;text-align:center;height:auto}
+.sheet-empty .btn{margin:4px}
+.sheet-help{margin:0;padding:8px 12px;font-size:.78rem;color:#6b7086;border-top:1px solid #eef0f5;background:#fafbfd}
+.sheet-sub{color:#fff;font-family:Fredoka,Nunito,sans-serif;font-weight:600;font-size:calc(1.15rem*var(--scale));margin:22px 4px 0;text-shadow:0 2px 6px rgba(0,0,0,.55)}
+.sheet-note{margin:0;padding:1em 1.2em;font-weight:700}
+.rule-row{display:grid;grid-template-columns:auto 80px auto 1fr 140px auto;gap:6px;align-items:center;margin-bottom:6px}
+.rule-row input,.rule-row select{padding:.45em .55em}
+@media(max-width:600px){.sheet .nm{min-width:140px;max-width:140px}.sheet-page{padding:10px 10px 120px}.rule-row{grid-template-columns:auto 64px auto 1fr;}.rule-row select{grid-column:2/4}.sheet-scroll{max-height:none}.sheet-help{display:none}}
 .f-stack .list{display:flex;flex-direction:column;gap:14px;padding:14px;max-width:640px;margin:0 auto}
 .f-free .canvas{position:relative;min-width:100%;min-height:100%}
 .f-free .card{position:absolute}
@@ -749,6 +806,7 @@ const FORMATS = [
   { id: 'wall', icon: '🧱', label: 'Mur', desc: 'Cartes empilées en briques' },
   { id: 'grid', icon: '▦', label: 'Grille', desc: 'Rangées régulières' },
   { id: 'free', icon: '✥', label: 'Toile libre', desc: 'Placez les cartes où vous voulez' },
+  { id: 'sheet', icon: '📊', label: 'Tableau de classe', desc: 'Élèves en lignes, colonnes à la carte (privé)' },
 ];
 const MODES = { open: ['🟢', 'Ouvert', 'Les élèves publient librement'], review: ['🟡', 'Validation', 'Les publications attendent votre accord'], closed: ['🔒', 'Fermé', 'Les élèves ne peuvent plus publier'] };
 const GOOGLE_G = `<svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>`;
@@ -776,7 +834,7 @@ async function makeFirebaseStore() {
     wallExists: async id => (await getDoc(wallRef(id))).exists(),
     createWall: (id, data) => setDoc(wallRef(id), data),
     updateWall: (id, patch) => updateDoc(wallRef(id), patch),
-    async deleteWall(id) { const ps = await getDocs(postsCol(id)); await chunked(ps.docs.map(d => d.ref), (b, ref) => b.delete(ref)); await deleteDoc(wallRef(id)); },
+    async deleteWall(id) { const ps = await getDocs(postsCol(id)); await chunked(ps.docs.map(d => d.ref), (b, ref) => b.delete(ref)); await deleteDoc(doc(db, 'walls', id, 'private', 'sheet')).catch(() => { }); await deleteDoc(wallRef(id)); },
     watchWall: (id, cb, err) => onSnapshot(wallRef(id), s => cb(s.exists() ? { id: s.id, ...s.data() } : null), err || onErr),
     watchPosts(w, { owner, uid }, cb) {
       if (owner) return onSnapshot(postsCol(w), s => cb(docs(s)), onErr);
@@ -798,6 +856,9 @@ async function makeFirebaseStore() {
     async deleteComment(w, p, c) { await deleteDoc(doc(db, 'walls', w, 'posts', p, 'comments', c)); await updateDoc(postRef(w, p), { cc: increment(-1) }).catch(() => {}); },
     async getTeacher(uid) { const s = await getDoc(doc(db, 'teachers', uid)); return s.exists() ? s.data() : { games: [] }; },
     saveTeacher: (uid, data) => setDoc(doc(db, 'teachers', uid), data, { merge: true }),
+    watchSheet: (w, cb) => onSnapshot(doc(db, 'walls', w, 'private', 'sheet'), s => cb(s.exists() ? s.data() : null), onErr),
+    initSheet: (w, data) => setDoc(doc(db, 'walls', w, 'private', 'sheet'), data),
+    updateSheet: (w, patch) => updateDoc(doc(db, 'walls', w, 'private', 'sheet'), Object.fromEntries(Object.entries(patch).map(([k, v]) => [k, v === null ? deleteField() : v]))),
     setPresence: w => setDoc(doc(db, 'presence', w), { lastSeen: serverTimestamp() }),
     clearPresence: w => deleteDoc(doc(db, 'presence', w)),
     async getPresence(w) { const s = await getDoc(doc(db, 'presence', w)); const v = s.exists() ? s.data().lastSeen : 0; return typeof v === 'number' ? v : (v?.toMillis?.() || 0); },
@@ -836,6 +897,13 @@ function makeDemoStore() {
     deleteComment: async (w, p, c) => { delete db.comments[c]; if (db.posts[p]) db.posts[p].cc = Math.max(0, (db.posts[p].cc || 1) - 1); emit(); },
     getTeacher: async uid => clone(db.teachers[uid] || { games: [] }),
     saveTeacher: async (uid, data) => { db.teachers[uid] = { ...(db.teachers[uid] || {}), ...clone(data) }; emit(); },
+    watchSheet: (w, cb) => sub(() => cb(db.sheets?.[w] ? clone(db.sheets[w]) : null)),
+    initSheet: async (w, data) => { db.sheets = db.sheets || {}; db.sheets[w] = clone(data); emit(); },
+    updateSheet: async (w, patch) => {
+      const sh = db.sheets?.[w]; if (!sh) return;
+      Object.entries(clone(patch)).forEach(([k, v]) => { if (v === null) { const ks = k.split('.'), last = ks.pop(); const o = ks.reduce((a, x) => a?.[x], sh); if (o) delete o[last]; } else setPath(sh, k, v); });
+      emit();
+    },
     setPresence: async () => { }, clearPresence: async () => { }, getPresence: async () => 0,
   };
 }
@@ -852,6 +920,15 @@ function seedDemo(db) {
   P({ type: 'text', sectionId: 's3', body: 'I can play the guitar but I can’t sing!', authorUid: 'demo-lea', authorName: 'Léa', color: 'pink', likes: { 'demo-tom': true, 'demo-sam': true } }, 7);
   P({ type: 'text', sectionId: 's3', body: 'My dog can run very fast. 🐕', authorUid: 'demo-tom', authorName: 'Tom', color: 'blue' }, 8);
   P({ type: 'text', sectionId: 's3', body: 'I can speak three languages.', authorUid: 'demo-sam', authorName: 'Sam', status: 'pending', color: 'purple' }, 9);
+  const t = 'DEMOTB';
+  db.walls[t] = { id: t, title: '6e B — Suivi de classe', subtitle: 'Travail & comportement', ownerUid: 'demo-prof', ownerName: 'Mr G', format: 'sheet', bg: 'chalkboard', bgDim: 0, sections: [], studentMode: 'closed', allowComments: false, allowLikes: false, showAuthors: true, createdAt: now - 1000, updatedAt: now - 1000 };
+  db.posts.seedT1 = { id: 'seedT1', wallId: t, type: 'highlight', title: 'Barème', body: 'Moins de 5 bâtons : pas de sanction\n5 à 9 bâtons : 1 h de retenue\n10 à 14 bâtons : 2 h de retenue\n15 bâtons et plus : 2 h + rendez-vous avec les parents\n\nToute contestation entraîne un bâton.', hl: 'red', icon: '📏', authorUid: 'demo-prof', authorName: 'Mr G', status: 'approved', hidden: false, likes: {}, cc: 0, createdAt: now, order: 1, color: 'white', size: 'M', fs: 1 };
+  const sh = defaultSheet(); const [a, b] = sh.cols;
+  sh.cols.splice(2, 0, { id: 'cmat', name: 'Matériel', type: 'check', width: 'S', color: 'green' });
+  sh.cols.push({ id: 'cnote', name: 'Remarques', type: 'text', width: 'L', color: '', gap: true });
+  sh.rows = ['Alex Bernard', 'Chloé Dumas', 'Enzo Fabre', 'Inès Garnier', 'Jules Henry', 'Lina Moreau', 'Nathan Perrin', 'Zoé Vidal'].map((n, i) => ({ id: 'r' + i, name: n }));
+  sh.cells = { r0: { [a.id]: 2, [b.id]: 4 }, r1: { [a.id]: 1 }, r2: { [a.id]: 6, [b.id]: 5, cmat: true, cnote: 'Oublie souvent son cahier' }, r4: { [b.id]: 11 }, r6: { [a.id]: 3, cmat: true } };
+  db.sheets = { [t]: sh };
 }
 
 /* ---------------- état ---------------- */
@@ -870,6 +947,7 @@ function go(q) { history.pushState({}, '', href(q)); route(); }
 function cleanup() {
   stopWallPresence();
   S.unsubs.forEach(u => { try { u && u(); } catch { } }); S.unsubs = [];
+  S.sheet = null; S.sheetLoaded = false; S.sheetInit = false; S.sheetEditing = false; S.sel = null; SH.undo = [];
   S.wall = null; S.posts = []; S.postsLoaded = false; S.isOwner = false; S.preview = false; S.els = new Map(); S.lists = {}; S.ckey = null;
   if (S.trayEl) { S.trayEl.remove(); S.trayEl = null; }
   closeSpot();
@@ -1084,7 +1162,10 @@ function onWall(w) {
   S.isOwner = !!S.user && w.ownerUid === S.user.uid;
   if (first) {
     S.unsubs.push(S.store.watchPosts(S.wallId, { owner: S.isOwner, uid: S.user.uid }, list => { S.posts = list; S.postsLoaded = true; renderPosts(); renderTray(); checkSpot(); }));
-    if (S.isOwner) { loadTeacher().then(ensureNotify); startWallPresence(); }
+    if (S.isOwner) {
+      loadTeacher().then(ensureNotify); startWallPresence();
+      S.unsubs.push(S.store.watchSheet(S.wallId, d => { S.sheetLoaded = true; S.sheet = d ? normSheet(d) : null; renderSheet(); }));
+    }
     else if (!S.wall.keepOpen) teacherAway().then(() => updateChrome());
   }
   updateChrome(); renderPosts(); checkSpot();
@@ -1151,6 +1232,12 @@ function ensureContainers() {
     });
     if (tm) { const add = document.createElement('button'); add.className = 'lane-new'; add.textContent = '＋ Nouvelle colonne'; add.onclick = addSection; lanes.appendChild(add); }
     scroll.appendChild(lanes);
+  } else if (fmt === 'sheet') {
+    const box = document.createElement('div'); box.className = 'sheet-page';
+    if (S.isOwner) { const wrap = document.createElement('section'); wrap.id = 'sheet'; wrap.className = 'sheet-wrap'; box.appendChild(wrap); bindSheet(wrap); }
+    if (tm) { const h = document.createElement('div'); h.className = 'sheet-sub'; h.textContent = '📌 Consignes, barème & widgets (visibles par les élèves)'; box.appendChild(h); }
+    const l = document.createElement('div'); l.className = 'list'; S.lists.main = l; box.appendChild(l); makeSortable(l);
+    scroll.appendChild(box); renderSheet();
   } else if (fmt === 'free') {
     const c = document.createElement('div'); c.className = 'canvas'; S.lists.main = c; scroll.appendChild(c);
   } else {
@@ -1177,7 +1264,7 @@ function renderPosts() {
   }
   if (fmt === 'free') sizeCanvas(vis);
   const empty = $('#empty');
-  if (empty) { empty.hidden = !S.postsLoaded || vis.length > 0; empty.innerHTML = canPost() ? `Ce mur est encore vide.<br>Appuie sur <b>＋</b> pour publier !` : 'Ce mur est encore vide.'; }
+  if (empty) { empty.hidden = !S.postsLoaded || vis.length > 0 || (fmt === 'sheet' && S.isOwner); empty.innerHTML = canPost() ? `Ce mur est encore vide.<br>Appuie sur <b>＋</b> pour publier !` : 'Ce mur est encore vide.'; }
   updatePending();
 }
 function placeFree(el, p) { const s = S.scale; el.style.left = (p.x ?? 40) * s + 'px'; el.style.top = (p.y ?? 40) * s + 'px'; el.style.width = (p.w || 300) * s + 'px'; el.style.height = p.h ? p.h * s + 'px' : ''; el.classList.toggle('fixed-h', !!p.h); }
@@ -1487,6 +1574,7 @@ function loadTeacher() {
 // Active automatiquement les e-mails sur les murs qui n'ont encore aucun réglage.
 function ensureNotify() {
   const u = S.teacher?.notifyUrl;
+  if (S.isOwner && S.wall && u === '' && S.wall.notify?.url) { S.wall.notify = { on: false, url: '' }; guard(() => S.store.updateWall(S.wallId, { notify: { on: false, url: '' } })); return; }
   if (!S.isOwner || !S.wall || !GAS_RE.test(u || '') || (S.wall.notify && GAS_RE.test(S.wall.notify.url || ''))) return;
   S.wall.notify = { on: true, url: u };
   guard(() => S.store.updateWall(S.wallId, { notify: { on: true, url: u } }));
@@ -1511,6 +1599,370 @@ function openNotifyHelp() {
   <textarea readonly style="min-height:220px;font-family:ui-monospace,Menlo,monospace;font-size:.8rem">${esc(code)}</textarea>`;
   modal({ title: '📧 Activer les e-mails', body: root, wide: true });
   $('#gas-copy', root).onclick = async () => { try { await navigator.clipboard.writeText(code); } catch { const t = $('textarea', root); t.select(); document.execCommand('copy'); } toast('Code copié ✓', 'ok'); };
+}
+
+/* =====================================================================
+   TABLEAU DE CLASSE (format « sheet ») — visible uniquement par l'enseignant
+   ===================================================================== */
+const COL_TYPES = {
+  tally: { icon: '𝍸', label: 'Bâtons (compteur)' },
+  text: { icon: '📝', label: 'Texte libre' },
+  number: { icon: '🔢', label: 'Nombre / note' },
+  check: { icon: '☑️', label: 'Case à cocher' },
+  status: { icon: '🟢', label: 'Pastilles / émojis' },
+  total: { icon: 'Σ', label: 'Bilan (total + barème)' },
+};
+const COLBG = { '': '#f3f4f8', blue: '#dbeafe', green: '#dcfce7', yellow: '#fef3c7', orange: '#ffedd5', red: '#fee2e2', purple: '#ede9fe', pink: '#fce7f3' };
+const RULE_COLORS = { green: '#16a34a', blue: '#2563eb', orange: '#ea580c', red: '#dc2626', purple: '#7c3aed', grey: '#6b7280' };
+const DEFAULT_RULES = [{ min: 0, label: 'Pas de sanction', color: 'green' }, { min: 5, label: '1 h de retenue', color: 'orange' }, { min: 10, label: '2 h de retenue', color: 'red' }, { min: 15, label: '2 h + RDV parents', color: 'purple' }];
+function defaultSheet() {
+  const a = { id: 'c' + genId(), name: 'Travail', type: 'tally', width: 'M', color: 'blue' };
+  const b = { id: 'c' + genId(), name: 'Comportement', type: 'tally', width: 'M', color: 'orange' };
+  const c = { id: 'c' + genId(), name: 'Bilan', type: 'total', width: 'L', color: 'purple', gap: true, sum: [a.id, b.id], rules: clone(DEFAULT_RULES) };
+  return { nameTitle: 'Élèves', cols: [a, b, c], rows: [], cells: {} };
+}
+const normSheet = d => ({ nameTitle: d?.nameTitle || 'Élèves', cols: Array.isArray(d?.cols) ? d.cols : [], rows: Array.isArray(d?.rows) ? d.rows : [], cells: d?.cells && typeof d.cells === 'object' ? d.cells : {} });
+const SH = { undo: [] };
+const shCols = () => S.sheet?.cols || [], shRows = () => S.sheet?.rows || [];
+const cellVal = (row, col) => S.sheet?.cells?.[row.id]?.[col.id];
+function totalOf(row, col) {
+  return (col.sum || []).reduce((a, id) => {
+    const sc = shCols().find(x => x.id === id); if (!sc) return a;
+    const v = cellVal(row, sc);
+    if (sc.type === 'tally' || sc.type === 'number') return a + (parseFloat(String(v ?? '').replace(',', '.')) || 0);
+    if (sc.type === 'check') return a + (v ? 1 : 0);
+    return a;
+  }, 0);
+}
+const ruleFor = (col, t) => [...(col.rules || [])].sort((a, b) => b.min - a.min).find(r => t >= r.min);
+function tallySVG(n) {
+  const g = k => `<svg class="tl" viewBox="0 0 26 20" aria-hidden="true">${Array.from({ length: Math.min(k, 4) }, (_, i) => `<line x1="${4 + i * 5}" y1="2" x2="${4 + i * 5}" y2="18"/>`).join('')}${k === 5 ? '<line x1="1" y1="15" x2="22" y2="5"/>' : ''}</svg>`;
+  let out = ''; for (let i = 0; i < Math.floor(n / 5); i++) out += g(5); if (n % 5) out += g(n % 5); return out;
+}
+function displayVal(row, col) {
+  const v = cellVal(row, col);
+  if (col.type === 'total') { const t = totalOf(row, col), r = ruleFor(col, t); return t + (r?.label ? ' - ' + r.label : ''); }
+  if (col.type === 'check') return v ? '✓' : '';
+  return v == null ? '' : String(v);
+}
+function cellHTML(row, col) {
+  const v = cellVal(row, col);
+  switch (col.type) {
+    case 'text': return v ? `<div class="cv">${esc(v)}</div>` : '';
+    case 'number': return v != null && v !== '' ? `<div class="cv num">${esc(v)}</div>` : '';
+    case 'tally': { const n = Math.max(0, parseInt(v) || 0); return `<div class="tally">${tallySVG(n)}${n ? `<span class="tn">${n}</span>` : ''}</div><span class="tb"><button type="button" data-tally="-1" title="Retirer un bâton (touche −)">−</button><button type="button" data-tally="1" title="Ajouter un bâton (touche +)">＋</button></span>`; }
+    case 'check': return `<span class="ck ${v ? 'on' : ''}" data-check>${v ? '✓' : ''}</span>`;
+    case 'status': return v ? `<span class="st">${esc(v)}</span>` : '';
+    case 'total': { const t = totalOf(row, col), r = ruleFor(col, t); return `<span class="tot" style="--rc:${RULE_COLORS[r?.color] || '#6b7280'}"><b>${t}</b>${r?.label ? ' · ' + esc(r.label) : ''}</span>`; }
+  }
+  return '';
+}
+const statusOpts = col => String(col.options || '🟢, 🟠, 🔴').split(',').map(s => s.trim()).filter(Boolean);
+
+/* ---- écriture ---- */
+function shWrite(patch) { guard(() => S.store.updateSheet(S.wallId, patch)); }
+function setCells(changes, { undo = true } = {}) {
+  // changes : [{ row, col, value }] ; value null/'' = vider
+  const patch = {}, group = [];
+  changes.forEach(({ row, col, value }) => {
+    const prev = cellVal(row, col), nv = value === '' || value == null ? null : value;
+    if ((prev ?? null) === nv) return;
+    group.push({ rowId: row.id, colId: col.id, prev: prev ?? null });
+    const cs = S.sheet.cells[row.id] = S.sheet.cells[row.id] || {};
+    if (nv == null) delete cs[col.id]; else cs[col.id] = nv;
+    patch[`cells.${row.id}.${col.id}`] = nv;
+  });
+  if (!group.length) return;
+  if (undo) { SH.undo.push(group); if (SH.undo.length > 60) SH.undo.shift(); }
+  renderSheet(); shWrite(patch);
+}
+function undoSheet() {
+  const g = SH.undo.pop(); if (!g) return toast('Rien à annuler.');
+  const patch = {};
+  g.forEach(({ rowId, colId, prev }) => { const cs = S.sheet.cells[rowId] = S.sheet.cells[rowId] || {}; if (prev == null) delete cs[colId]; else cs[colId] = prev; patch[`cells.${rowId}.${colId}`] = prev; });
+  renderSheet(); shWrite(patch); toast('Annulé ↩︎');
+}
+const writeRows = () => { renderSheet(); shWrite({ rows: S.sheet.rows }); };
+const writeCols = () => { renderSheet(); shWrite({ cols: S.sheet.cols }); };
+
+/* ---- rendu ---- */
+function renderSheet() {
+  const wrap = $('#sheet'); if (!wrap) return;
+  if (!teacherMode()) { wrap.innerHTML = '<p class="sheet-note">👁 Vue élève : le tableau de classe n’est jamais visible par les élèves. Ils ne voient que les cartes ci-dessous.</p>'; return; }
+  if (!S.sheet) {
+    if (S.sheetLoaded && !S.sheetInit) { S.sheetInit = true; S.sheet = defaultSheet(); guard(() => S.store.initSheet(S.wallId, S.sheet)); }
+    else { wrap.innerHTML = '<p class="sheet-note">Chargement du tableau…</p>'; return; }
+  }
+  if (S.sheetEditing) { S.sheetDirty = true; return; }
+  S.sheetDirty = false;
+  const cols = shCols(), rows = shRows();
+  const old = $('.sheet-scroll', wrap), sx = old?.scrollLeft || 0, sy = old?.scrollTop || 0;
+  const head = `<tr><th class="rn"></th><th class="nm" data-k="nametitle" title="Renommer">${esc(S.sheet.nameTitle)}</th>${cols.map(c => (c.gap ? '<th class="gap"></th>' : '') + `<th data-col="${esc(c.id)}" class="ch w-${esc(c.width || 'M')}" style="--hc:${COLBG[c.color || ''] || COLBG['']}"><span class="ch-in"><span class="ch-t" title="${esc(COL_TYPES[c.type]?.label || '')}">${COL_TYPES[c.type]?.icon || ''} ${esc(c.name)}</span><button type="button" class="ch-m" data-colmenu="${esc(c.id)}" title="Options de la colonne">⋯</button></span></th>`).join('')}<th class="addc"><button type="button" data-act="addcol" title="Ajouter une colonne">＋</button></th></tr>`;
+  const body = rows.length ? rows.map((r, i) => `<tr data-row="${esc(r.id)}"><td class="rn"><span class="rh" title="Glisser pour déplacer">⠿</span>${i + 1}</td><td class="nm cell" data-r="${i}" data-c="-1"><span class="nm-t">${esc(r.name)}</span><button type="button" class="rdel" data-rdel="${esc(r.id)}" title="Supprimer cette ligne">✕</button></td>${cols.map((c, j) => (c.gap ? '<td class="gap"></td>' : '') + `<td class="cell t-${esc(c.type)}" data-r="${i}" data-c="${j}" style="--hc:${COLBG[c.color || ''] || COLBG['']}">${cellHTML(r, c)}</td>`).join('')}<td class="addc"></td></tr>`).join('')
+    : `<tr class="sheet-empty"><td colspan="${cols.length + 3 + cols.filter(c => c.gap).length}"><p><b>Aucun élève pour l’instant.</b></p><button type="button" class="btn primary" data-act="import">📥 Importer une liste d’élèves</button> <button type="button" class="btn" data-act="addrow">＋ Ajouter un élève</button></td></tr>`;
+  wrap.innerHTML = `<div class="sheet-bar">
+      <button type="button" class="btn" data-act="addrow">＋ Élève</button>
+      <button type="button" class="btn" data-act="import">📥 Importer une liste</button>
+      <button type="button" class="btn" data-act="addcol">＋ Colonne</button>
+      <button type="button" class="btn" data-act="sort" title="Trier les élèves par ordre alphabétique">A→Z</button>
+      <span class="sp"></span>
+      <button type="button" class="btn" data-act="undo" title="Annuler (⌘Z)">↩︎</button>
+      <button type="button" class="btn" data-act="reset">🧹 Remise à zéro</button>
+      <button type="button" class="btn" data-act="export">⬇︎ Exporter (Excel)</button>
+    </div>
+    <div class="sheet-scroll"><table class="sheet"><thead>${head}</thead><tbody>${body}</tbody></table></div>
+    <p class="sheet-help">Clic : sélectionner · double-clic ou Entrée : modifier · flèches pour se déplacer · <b>+</b>/<b>−</b> : bâtons · ⌘C / ⌘X / ⌘V : copier, couper, coller (même une colonne entière depuis Excel) · Suppr : vider · ⌘Z : annuler</p>`;
+  const sc = $('.sheet-scroll', wrap); sc.scrollLeft = sx; sc.scrollTop = sy;
+  if (window.Sortable) {
+    const tb = $('tbody', wrap);
+    if (rows.length) Sortable.create(tb, { handle: '.rh', animation: 150, ghostClass: 'ghost', onEnd: () => { const ids = $$('tr[data-row]', tb).map(t => t.dataset.row); S.sheet.rows = ids.map(id => rows.find(r => r.id === id)).filter(Boolean); S.sel = null; writeRows(); } });
+    Sortable.create($('thead tr', wrap), { draggable: 'th[data-col]', filter: '.ch-m', preventOnFilter: false, animation: 150, ghostClass: 'ghost', onEnd: e => { if (e.oldIndex === e.newIndex) return; const ids = $$('thead th[data-col]', wrap).map(t => t.dataset.col); S.sheet.cols = ids.map(id => cols.find(c => c.id === id)).filter(Boolean); S.sel = null; writeCols(); } });
+  }
+  if (S.sel) markSel();
+}
+const cellEl = (r, c) => $(`#sheet td.cell[data-r="${r}"][data-c="${c}"]`);
+function markSel(scroll) {
+  $$('#sheet td.sel').forEach(t => t.classList.remove('sel'));
+  if (!S.sel) return;
+  const td = cellEl(S.sel.r, S.sel.c); if (!td) { S.sel = null; return; }
+  td.classList.add('sel'); if (scroll) td.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+}
+function selectCell(r, c) { S.sel = { r, c }; markSel(true); }
+function moveSel(dr, dc) {
+  if (!S.sel) return selectCell(0, -1);
+  const r = Math.max(0, Math.min(shRows().length - 1, S.sel.r + dr)), c = Math.max(-1, Math.min(shCols().length - 1, S.sel.c + dc));
+  selectCell(r, c);
+}
+
+/* ---- édition d'une case ---- */
+function startEdit(r, c, initial) {
+  const row = shRows()[r], col = c >= 0 ? shCols()[c] : null; if (!row) return;
+  if (col && !['text', 'number'].includes(col.type)) return;
+  const td = cellEl(r, c); if (!td) return;
+  const ta = document.createElement('textarea'); ta.className = 'ced';
+  ta.value = initial != null ? initial : (col ? String(cellVal(row, col) ?? '') : row.name);
+  if (col?.type === 'number') ta.inputMode = 'decimal';
+  td.appendChild(ta); S.sheetEditing = true; ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length);
+  let done = false;
+  const finish = (save, move) => {
+    if (done) return; done = true; S.sheetEditing = false;
+    const v = ta.value.trim(); ta.remove();
+    if (save) {
+      if (!col) { if (v && v !== row.name) { row.name = v; writeRows(); } }
+      else if (col.type === 'number' && v && isNaN(parseFloat(v.replace(',', '.')))) toast('Ce n’est pas un nombre.', 'err');
+      else setCells([{ row, col, value: col.type === 'number' && v ? v.replace('.', ',') : v }]);
+    }
+    if (S.sheetDirty) renderSheet();
+    if (move) moveSel(move[0], move[1]); else markSel();
+  };
+  ta.onkeydown = e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); finish(true, [1, 0]); }
+    else if (e.key === 'Tab') { e.preventDefault(); finish(true, [0, e.shiftKey ? -1 : 1]); }
+    else if (e.key === 'Escape') { e.preventDefault(); finish(false); }
+    e.stopPropagation();
+  };
+  ta.onblur = () => finish(true);
+}
+function cellAction(r, c, kind) {
+  const row = shRows()[r], col = shCols()[c]; if (!row || !col) return;
+  const v = cellVal(row, col);
+  if (col.type === 'tally') { const n = Math.max(0, (parseInt(v) || 0) + (kind === 'minus' ? -1 : 1)); setCells([{ row, col, value: n || null }]); }
+  else if (col.type === 'check') setCells([{ row, col, value: v ? null : true }]);
+  else if (col.type === 'status') { const o = statusOpts(col), i = o.indexOf(v); setCells([{ row, col, value: i + 1 < o.length ? o[i + 1] : null }]); }
+}
+
+/* ---- copier / coller ---- */
+function pasteText(text) {
+  if (!S.sel) return;
+  const own = SH.clip && SH.clip.text === text;
+  const lines = String(text).replace(/\r/g, '').replace(/\n+$/, '').split('\n');
+  const { r, c } = S.sel, cols = shCols();
+  if (c === -1) { // colonne des noms : renomme ou ajoute des élèves
+    lines.forEach((l, i) => { const name = l.split('\t')[0].trim(); if (!name) return; const row = S.sheet.rows[r + i]; if (row) row.name = name; else S.sheet.rows.push({ id: 'r' + genId(), name }); });
+    return writeRows();
+  }
+  const changes = [];
+  lines.forEach((line, i) => {
+    const row = shRows()[r + i]; if (!row) return;
+    line.split('\t').forEach((raw, k) => {
+      const col = cols[c + k]; if (!col || col.type === 'total') return;
+      let v = raw.trim();
+      if (own && lines.length === 1 && k === 0 && SH.clip.type === col.type) v = SH.clip.value;
+      else if (col.type === 'tally') v = parseInt(v) || null;
+      else if (col.type === 'number') v = v && !isNaN(parseFloat(v.replace(',', '.'))) ? v.replace('.', ',') : null;
+      else if (col.type === 'check') v = /^(x|✓|✔|1|oui|vrai|true|yes)$/i.test(v) || null;
+      changes.push({ row, col, value: v });
+    });
+  });
+  setCells(changes);
+}
+function copySel(e, cut) {
+  if (!S.sel) return;
+  const row = shRows()[S.sel.r]; if (!row) return;
+  const col = S.sel.c >= 0 ? shCols()[S.sel.c] : null;
+  const text = col ? displayVal(row, col) : row.name;
+  SH.clip = { text, type: col?.type || 'name', value: col ? cellVal(row, col) : row.name };
+  e.clipboardData.setData('text/plain', text); e.preventDefault();
+  if (cut && col && col.type !== 'total') setCells([{ row, col, value: null }]);
+}
+
+/* ---- événements (installés une fois) ---- */
+function sheetActive() { return !!$('#sheet') && teacherMode() && !!S.sheet && !$('.modal-back'); }
+function bindSheet(wrap) {
+  wrap.addEventListener('click', e => {
+    const t = e.target;
+    const act = t.closest('[data-act]')?.dataset.act;
+    if (act) return sheetAct(act);
+    const cm = t.closest('[data-colmenu]'); if (cm) return openColMenu(cm.dataset.colmenu);
+    const rd = t.closest('[data-rdel]'); if (rd) return deleteRow(rd.dataset.rdel);
+    if (t.closest('th[data-k="nametitle"]')) return renameNameCol();
+    const td = t.closest('td.cell'); if (!td) return;
+    const r = +td.dataset.r, c = +td.dataset.c, was = S.sel && S.sel.r === r && S.sel.c === c;
+    selectCell(r, c);
+    const tb = t.closest('[data-tally]'); if (tb) return cellAction(r, c, tb.dataset.tally === '-1' ? 'minus' : 'plus');
+    const col = shCols()[c];
+    if (col?.type === 'check' && t.closest('[data-check]')) return cellAction(r, c);
+    if (col?.type === 'status') return cellAction(r, c);
+    if (was && (c === -1 || ['text', 'number'].includes(col?.type))) startEdit(r, c);
+  });
+  wrap.addEventListener('dblclick', e => { const td = e.target.closest('td.cell'); if (td && !e.target.closest('[data-tally],[data-rdel]')) startEdit(+td.dataset.r, +td.dataset.c); });
+}
+document.addEventListener('mousedown', e => { if (S.sel && !e.target.closest('#sheet') && !e.target.closest('.modal-back')) { S.sel = null; markSel(); } });
+document.addEventListener('keydown', e => {
+  if (!sheetActive() || S.sheetEditing || !S.sel) return;
+  if (e.target.closest && e.target.closest('input,textarea,select,[contenteditable="true"]')) return;
+  const k = e.key, mod = e.metaKey || e.ctrlKey, { r, c } = S.sel, col = c >= 0 ? shCols()[c] : null, row = shRows()[r];
+  const nav = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] };
+  if (mod && k.toLowerCase() === 'z') { e.preventDefault(); return undoSheet(); }
+  if (mod) return;
+  if (nav[k]) { e.preventDefault(); return moveSel(...nav[k]); }
+  if (k === 'Tab') { e.preventDefault(); return moveSel(0, e.shiftKey ? -1 : 1); }
+  const editable = c === -1 || ['text', 'number'].includes(col?.type);
+  if (k === 'Enter' || k === 'F2') { e.preventDefault(); return editable ? startEdit(r, c) : cellAction(r, c); }
+  if (k === ' ' && col && ['tally', 'check', 'status'].includes(col.type)) { e.preventDefault(); return cellAction(r, c); }
+  if ((k === '+' || k === '=') && col?.type === 'tally') { e.preventDefault(); return cellAction(r, c, 'plus'); }
+  if (k === '-' && col?.type === 'tally') { e.preventDefault(); return cellAction(r, c, 'minus'); }
+  if ((k === 'Backspace' || k === 'Delete') && col && col.type !== 'total') { e.preventDefault(); return setCells([{ row, col, value: null }]); }
+  if (k.length === 1 && editable && c >= 0) { e.preventDefault(); return startEdit(r, c, k); }
+});
+document.addEventListener('copy', e => { if (sheetActive() && !S.sheetEditing && S.sel && !e.target.closest?.('input,textarea')) copySel(e, false); });
+document.addEventListener('cut', e => { if (sheetActive() && !S.sheetEditing && S.sel && !e.target.closest?.('input,textarea')) copySel(e, true); });
+document.addEventListener('paste', e => {
+  if (!sheetActive() || S.sheetEditing || !S.sel || e.target.closest?.('input,textarea,[contenteditable="true"]')) return;
+  e.preventDefault(); pasteText(e.clipboardData?.getData('text/plain') || '');
+});
+
+/* ---- actions ---- */
+function sheetAct(a) {
+  if (a === 'addrow') { S.sheet.rows.push({ id: 'r' + genId(), name: 'Nouvel élève' }); writeRows(); const r = S.sheet.rows.length - 1; selectCell(r, -1); return startEdit(r, -1, ''); }
+  if (a === 'import') return openImport();
+  if (a === 'addcol') return openColMenu(null);
+  if (a === 'sort') { S.sheet.rows.sort((x, y) => x.name.localeCompare(y.name, 'fr', { sensitivity: 'base' })); S.sel = null; writeRows(); return toast('Élèves triés par ordre alphabétique ✓', 'ok'); }
+  if (a === 'undo') return undoSheet();
+  if (a === 'reset') return openReset();
+  if (a === 'export') return exportSheet();
+}
+async function deleteRow(id) {
+  const row = shRows().find(r => r.id === id); if (!row) return;
+  if (!(await confirmBox(`Supprimer « ${row.name} » et toutes ses cases ?`, 'Supprimer'))) return;
+  S.sheet.rows = shRows().filter(r => r.id !== id); delete S.sheet.cells[id]; S.sel = null;
+  renderSheet(); shWrite({ rows: S.sheet.rows, [`cells.${id}`]: null });
+}
+async function renameNameCol() { const t = await promptBox('Titre de la première colonne', 'Titre', S.sheet.nameTitle, 'Renommer'); if (t) { S.sheet.nameTitle = t; renderSheet(); shWrite({ nameTitle: t }); } }
+function parseNames(text) {
+  const lines = String(text || '').replace(/\r/g, '').split('\n').map(l => l.trim()).filter(Boolean);
+  if (lines.length && /^(nom|élève|eleve|name|nom\s*[;,\t]\s*pr[ée]nom)\b/i.test(lines[0])) lines.shift();
+  return lines.map(l => { const f = l.split(/\t|;/).map(s => s.replace(/^"|"$/g, '').trim()).filter(Boolean); return (f.length >= 2 && f[1].length < 30 && !/\d/.test(f[1]) ? f[0] + ' ' + f[1] : f[0] || '').replace(/\s+/g, ' ').trim(); }).filter(Boolean).slice(0, 300);
+}
+function openImport() {
+  const root = document.createElement('div');
+  root.innerHTML = `<p>Collez votre liste, <b>un élève par ligne</b>. Depuis Excel, Numbers ou Pronote : sélectionnez la colonne des noms, copiez-la (⌘C), puis collez-la ici (⌘V). Si les noms et prénoms sont dans deux colonnes, ils seront réunis.</p>
+    <textarea id="imp-t" style="min-height:220px" placeholder="DUPONT Léa&#10;MARTIN Hugo&#10;…"></textarea>
+    <div class="row2"><div><label class="btn wide" for="imp-f">📁 Ou choisir un fichier (.csv, .txt)</label><input type="file" id="imp-f" accept=".csv,.txt,text/csv,text/plain" hidden></div><div class="muted small" id="imp-n"></div></div>
+    <label class="chk"><input type="radio" name="imp-m" value="add" checked> Ajouter à la suite de la liste actuelle</label>
+    <label class="chk"><input type="radio" name="imp-m" value="replace"> Remplacer la liste actuelle (les cases des élèves retirés sont effacées)</label>
+    <label class="chk"><input type="checkbox" id="imp-s" checked> Trier par ordre alphabétique</label>`;
+  const t = $('#imp-t', root), n = $('#imp-n', root);
+  const count = () => { const k = parseNames(t.value).length; n.textContent = k ? `${k} élève${k > 1 ? 's' : ''} détecté${k > 1 ? 's' : ''}` : ''; };
+  t.oninput = count;
+  $('#imp-f', root).onchange = async e => { const f = e.target.files[0]; if (!f) return; t.value = await f.text(); count(); };
+  modal({ title: '📥 Importer une liste d’élèves', body: root, wide: true, actions: [{ label: 'Annuler' }, { label: 'Importer', cls: 'primary', onClick: () => {
+    const names = parseNames(t.value); if (!names.length) fail('Aucun nom trouvé.');
+    const replace = $('input[name=imp-m]:checked', root).value === 'replace';
+    let rows = replace ? [] : [...shRows()];
+    const have = new Set(rows.map(r => r.name.toLowerCase()));
+    names.forEach(nm => { if (!have.has(nm.toLowerCase())) { have.add(nm.toLowerCase()); rows.push({ id: 'r' + genId(), name: nm }); } });
+    if ($('#imp-s', root).checked) rows.sort((x, y) => x.name.localeCompare(y.name, 'fr', { sensitivity: 'base' }));
+    const patch = { rows };
+    if (replace) { const keep = new Set(rows.map(r => r.id)); Object.keys(S.sheet.cells).forEach(id => { if (!keep.has(id)) { delete S.sheet.cells[id]; patch[`cells.${id}`] = null; } }); }
+    S.sheet.rows = rows; S.sel = null; renderSheet(); shWrite(patch);
+    toast(`${names.length} élève${names.length > 1 ? 's' : ''} importé${names.length > 1 ? 's' : ''} ✓`, 'ok');
+  } }] });
+  setTimeout(() => t.focus(), 50);
+}
+function openColMenu(id) {
+  const isNew = !id, orig = shCols().find(c => c.id === id);
+  const c = isNew ? { id: 'c' + genId(), name: '', type: 'tally', width: 'M', color: '', gap: false } : clone(orig);
+  const root = document.createElement('div');
+  const others = () => shCols().filter(x => x.id !== c.id && ['tally', 'number', 'check'].includes(x.type));
+  function read() {
+    c.name = $('#cm-name', root).value; c.type = $('#cm-type', root).value; c.width = $('#cm-w', root).value;
+    c.color = ($('input[name=cm-c]:checked', root) || {}).value || ''; c.gap = $('#cm-gap', root).checked;
+    if ($('#cm-opt', root)) c.options = $('#cm-opt', root).value;
+    if ($('#cm-sum', root)) c.sum = $$('#cm-sum input:checked', root).map(i => i.value);
+    if ($('#cm-rules', root)) c.rules = $$('.rule-row', root).map(rw => ({ min: +$('.r-min', rw).value || 0, label: $('.r-lab', rw).value.trim(), color: $('.r-col', rw).value })).filter(r => r.label || r.min);
+  }
+  function draw() {
+    root.innerHTML = `<label class="f">Titre de la colonne</label><input id="cm-name" maxlength="40" value="${esc(c.name)}" placeholder="Ex : Travail, Oubli de matériel, Note du contrôle…">
+      <div class="row2"><div><label class="f">Type de case</label><select id="cm-type">${Object.entries(COL_TYPES).map(([k, t]) => `<option value="${k}" ${c.type === k ? 'selected' : ''}>${t.icon} ${t.label}</option>`).join('')}</select></div>
+      <div><label class="f">Largeur</label><select id="cm-w">${[['S', 'Étroite'], ['M', 'Moyenne'], ['L', 'Large'], ['XL', 'Très large']].map(([v, l]) => `<option value="${v}" ${(c.width || 'M') === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div></div>
+      <label class="f">Couleur</label><div class="swatches">${Object.entries(COLBG).map(([k, v]) => `<label class="sw" style="--c:${v}"><input type="radio" name="cm-c" value="${k}" ${(c.color || '') === k ? 'checked' : ''}><span></span></label>`).join('')}</div>
+      <label class="chk"><input type="checkbox" id="cm-gap" ${c.gap ? 'checked' : ''}> Séparer cette colonne de la précédente (un espace entre les deux)</label>
+      ${c.type === 'status' ? `<label class="f">Choix proposés (séparés par des virgules, un clic passe au suivant)</label><input id="cm-opt" value="${esc(c.options || '🟢, 🟠, 🔴')}" placeholder="🟢, 🟠, 🔴  ou  A, B, C, D">` : ''}
+      ${c.type === 'total' ? `<label class="f">Additionner les colonnes</label><div id="cm-sum">${others().length ? others().map(o => `<label class="chk"><input type="checkbox" value="${esc(o.id)}" ${(c.sum || []).includes(o.id) ? 'checked' : ''}> ${COL_TYPES[o.type].icon} ${esc(o.name)}</label>`).join('') : '<p class="muted small">Ajoutez d’abord des colonnes « Bâtons », « Nombre » ou « Case à cocher ».</p>'}</div>
+        <label class="f">Barème (à partir de… → message)</label><div id="cm-rules">${(c.rules || []).map(r => ruleRow(r)).join('')}</div><button type="button" class="btn small" id="cm-addr">＋ Ajouter un palier</button>` : ''}
+      ${isNew ? '' : `<div class="act-list" style="grid-template-columns:1fr 1fr;margin-top:16px"><button type="button" class="btn" data-m="-1">← Déplacer à gauche</button><button type="button" class="btn" data-m="1">Déplacer à droite →</button><button type="button" class="btn" id="cm-clear">🧹 Vider la colonne</button><button type="button" class="btn danger" id="cm-del">🗑 Supprimer la colonne</button></div>`}`;
+    $('#cm-type', root).onchange = () => { read(); if (c.type === 'total' && !c.rules) { c.rules = clone(DEFAULT_RULES); c.sum = others().filter(o => o.type === 'tally').map(o => o.id); } draw(); };
+    const ar = $('#cm-addr', root); if (ar) ar.onclick = () => { read(); c.rules = [...(c.rules || []), { min: 0, label: '', color: 'grey' }]; draw(); };
+    $$('.r-del', root).forEach((b, i) => b.onclick = () => { read(); c.rules.splice(i, 1); draw(); });
+    $$('[data-m]', root).forEach(b => b.onclick = () => { const a = S.sheet.cols, i = a.findIndex(x => x.id === c.id), j = i + +b.dataset.m; if (j < 0 || j >= a.length) return; [a[i], a[j]] = [a[j], a[i]]; writeCols(); });
+    const cl = $('#cm-clear', root); if (cl) cl.onclick = async () => { if (!(await confirmBox(`Vider toutes les cases de « ${orig.name} » ?`, 'Vider'))) return; setCells(shRows().map(row => ({ row, col: orig, value: null }))); toast('Colonne vidée (⌘Z pour annuler).', 'ok'); };
+    const dl = $('#cm-del', root); if (dl) dl.onclick = async () => {
+      if (!(await confirmBox(`Supprimer la colonne « ${orig.name} » et toutes ses cases ?`, 'Supprimer'))) return;
+      const patch = {}; S.sheet.cols = shCols().filter(x => x.id !== c.id);
+      S.sheet.cols.forEach(x => { if (x.sum) x.sum = x.sum.filter(s => s !== c.id); });
+      shRows().forEach(r => { if (S.sheet.cells[r.id]?.[c.id] != null) { delete S.sheet.cells[r.id][c.id]; patch[`cells.${r.id}.${c.id}`] = null; } });
+      patch.cols = S.sheet.cols; S.sel = null; renderSheet(); shWrite(patch); m.close();
+    };
+  }
+  const ruleRow = r => `<div class="rule-row"><span class="muted small">dès</span><input class="r-min" type="number" min="0" step="1" value="${+r.min || 0}"><span>→</span><input class="r-lab" maxlength="40" value="${esc(r.label || '')}" placeholder="Message"><select class="r-col">${Object.keys(RULE_COLORS).map(k => `<option value="${k}" ${r.color === k ? 'selected' : ''}>${{ green: '🟢 vert', blue: '🔵 bleu', orange: '🟠 orange', red: '🔴 rouge', purple: '🟣 violet', grey: '⚪ gris' }[k]}</option>`).join('')}</select><button type="button" class="ct r-del" title="Retirer">✕</button></div>`;
+  draw();
+  const m = modal({ title: isNew ? '＋ Nouvelle colonne' : '⚙️ Colonne « ' + orig.name + ' »', body: root, wide: true, actions: [{ label: 'Annuler' }, { label: isNew ? 'Ajouter' : 'Enregistrer', cls: 'primary', onClick: () => {
+    read(); c.name = c.name.trim(); if (!c.name) fail('Donnez un titre à la colonne.');
+    if (c.type !== 'status') delete c.options; if (c.type !== 'total') { delete c.sum; delete c.rules; }
+    if (isNew) S.sheet.cols.push(c); else S.sheet.cols = shCols().map(x => x.id === c.id ? c : x);
+    writeCols();
+  } }] });
+  setTimeout(() => $('#cm-name', root)?.focus(), 50);
+}
+function openReset() {
+  const cols = shCols().filter(c => c.type !== 'total');
+  const root = document.createElement('div');
+  root.innerHTML = `<p>Vider les cases de ces colonnes pour <b>tous les élèves</b> (par exemple en début de semaine ou de trimestre). La liste des élèves est conservée.</p>${cols.map(c => `<label class="chk"><input type="checkbox" value="${esc(c.id)}" ${c.type === 'tally' ? 'checked' : ''}> ${COL_TYPES[c.type].icon} ${esc(c.name)}</label>`).join('')}<p class="muted small">Astuce : exportez d’abord le tableau si vous voulez garder une trace. ⌘Z annule juste après.</p>`;
+  modal({ title: '🧹 Remise à zéro', body: root, actions: [{ label: 'Annuler' }, { label: 'Remettre à zéro', cls: 'danger', onClick: () => {
+    const ids = $$('input:checked', root).map(i => i.value); if (!ids.length) fail('Cochez au moins une colonne.');
+    const changes = []; shRows().forEach(row => ids.forEach(id => { const col = shCols().find(c => c.id === id); if (col) changes.push({ row, col, value: null }); }));
+    setCells(changes); toast('Remise à zéro effectuée ✓', 'ok');
+  } }] });
+}
+function exportSheet() {
+  const cols = shCols(), q = s => /[;"\n]/.test(s) ? '"' + String(s).replace(/"/g, '""') + '"' : s;
+  const lines = [[S.sheet.nameTitle, ...cols.map(c => c.name)].map(q).join(';'), ...shRows().map(r => [r.name, ...cols.map(c => displayVal(r, c))].map(q).join(';'))];
+  const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = (S.wall.title || 'tableau').replace(/[\\/:*?"<>|]+/g, '-') + ' - ' + new Date().toLocaleDateString('fr-FR').replace(/\//g, '-') + '.csv';
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  toast('Fichier exporté : il s’ouvre dans Excel ou Numbers ✓', 'ok');
 }
 
 /* ---------------- éditeur de publication ---------------- */
@@ -1791,7 +2243,11 @@ function openSettings() {
         read(); if (!(w.title || '').trim()) fail('Il faut un titre.');
         w.sections = w.sections.map(s => ({ ...s, title: s.title.trim() || 'Column' }));
         const patch = { title: w.title.trim(), subtitle: (w.subtitle || '').trim(), format: w.format, allowComments: !!w.allowComments, allowLikes: !!w.allowLikes, showAuthors: !!w.showAuthors, bg: w.bg, bgImage: w.bg === 'custom' ? (w.bgImage || null) : null, bgDim: +w.bgDim || 0, sections: w.sections, updatedAt: Date.now() };
-        if (w.notify && (w.notify.on || w.notify.url)) {
+        if (w.notify && !w.notify.on && !w.notify.url) {
+          // Adresse effacée : on coupe les e-mails sur ce mur et sur tous les autres.
+          patch.notify = { on: false, url: '' };
+          if (S.teacher?.notifyUrl) { S.teacher.notifyUrl = ''; guard(() => S.store.saveTeacher(S.user.uid, { notifyUrl: '' })); }
+        } else if (w.notify) {
           const u = w.notify.url || '';
           if (w.notify.on && !GAS_RE.test(u)) fail("Adresse du script invalide : elle commence par https://script.google.com/macros/s/ et finit par /exec");
           patch.notify = { on: !!w.notify.on && GAS_RE.test(u), url: GAS_RE.test(u) ? u : '' };
