@@ -169,6 +169,12 @@ td.cell:hover .tb,td.sel .tb{opacity:1}
 .sheet-help{margin:0;padding:8px 12px;font-size:.78rem;color:#6b7086;border-top:1px solid #eef0f5;background:#fafbfd}
 .sheet-sub{color:#fff;font-family:Fredoka,Nunito,sans-serif;font-weight:600;font-size:calc(1.15rem*var(--scale));margin:22px 4px 0;text-shadow:0 2px 6px rgba(0,0,0,.55)}
 .sheet-note{margin:0;padding:1em 1.2em;font-weight:700}
+.sheet-lock{text-align:center;padding:28px 20px}
+.sheet-lock .sl-ic{font-size:2.6rem}
+.sheet-lock p{margin:.5em auto 1em;max-width:520px}
+.sheet-bar .btn.team-on{background:#dcfce7;border-color:#86efac;color:#166534}
+.share-steps{background:#f4f6fa;border-radius:14px;padding:10px 14px;margin:10px 0}
+.share-steps ol{margin:.4em 0 0;padding-left:1.3em;line-height:1.6}
 .rule-row{display:grid;grid-template-columns:auto 80px auto 1fr 140px auto;gap:6px;align-items:center;margin-bottom:6px}
 .rule-row input,.rule-row select{padding:.45em .55em}
 @media(max-width:600px){.sheet .nm{min-width:140px;max-width:140px}.sheet-page{padding:10px 10px 120px}.rule-row{grid-template-columns:auto 64px auto 1fr;}.rule-row select{grid-column:2/4}.sheet-scroll{max-height:none}.sheet-help{display:none}}
@@ -819,6 +825,7 @@ async function makeFirebaseStore() {
   const auth = Au.getAuth(app);
   const db = F.getFirestore(app);
   const { doc, collection, query, where, onSnapshot, setDoc, updateDoc, deleteDoc, addDoc, getDoc, getDocs, writeBatch, deleteField, increment, serverTimestamp } = F;
+  const sheetRef = (w, key) => key ? doc(db, 'walls', w, 'team', key) : doc(db, 'walls', w, 'private', 'sheet');
   const wallRef = id => doc(db, 'walls', id), postsCol = w => collection(db, 'walls', w, 'posts'), postRef = (w, p) => doc(db, 'walls', w, 'posts', p), cmCol = (w, p) => collection(db, 'walls', w, 'posts', p, 'comments');
   const mapU = u => u ? { uid: u.uid, anonymous: u.isAnonymous, name: u.displayName || '', email: u.email || '', photo: u.photoURL || '' } : null;
   const onErr = e => { console.error(e); toast(errMsg(e), 'err'); };
@@ -834,7 +841,7 @@ async function makeFirebaseStore() {
     wallExists: async id => (await getDoc(wallRef(id))).exists(),
     createWall: (id, data) => setDoc(wallRef(id), data),
     updateWall: (id, patch) => updateDoc(wallRef(id), patch),
-    async deleteWall(id) { const ps = await getDocs(postsCol(id)); await chunked(ps.docs.map(d => d.ref), (b, ref) => b.delete(ref)); await deleteDoc(doc(db, 'walls', id, 'private', 'sheet')).catch(() => { }); await deleteDoc(wallRef(id)); },
+    async deleteWall(id) { const ps = await getDocs(postsCol(id)); await chunked(ps.docs.map(d => d.ref), (b, ref) => b.delete(ref)); await deleteDoc(doc(db, 'walls', id, 'private', 'sheet')).catch(() => { }); try { const m = await getDoc(doc(db, 'walls', id, 'private', 'meta')); if (m.exists() && m.data().teamKey) await deleteDoc(sheetRef(id, m.data().teamKey)); await deleteDoc(doc(db, 'walls', id, 'private', 'meta')); } catch { } await deleteDoc(wallRef(id)); },
     watchWall: (id, cb, err) => onSnapshot(wallRef(id), s => cb(s.exists() ? { id: s.id, ...s.data() } : null), err || onErr),
     watchPosts(w, { owner, uid }, cb) {
       if (owner) return onSnapshot(postsCol(w), s => cb(docs(s)), onErr);
@@ -856,9 +863,14 @@ async function makeFirebaseStore() {
     async deleteComment(w, p, c) { await deleteDoc(doc(db, 'walls', w, 'posts', p, 'comments', c)); await updateDoc(postRef(w, p), { cc: increment(-1) }).catch(() => {}); },
     async getTeacher(uid) { const s = await getDoc(doc(db, 'teachers', uid)); return s.exists() ? s.data() : { games: [] }; },
     saveTeacher: (uid, data) => setDoc(doc(db, 'teachers', uid), data, { merge: true }),
-    watchSheet: (w, cb) => onSnapshot(doc(db, 'walls', w, 'private', 'sheet'), s => cb(s.exists() ? s.data() : null), onErr),
-    initSheet: (w, data) => setDoc(doc(db, 'walls', w, 'private', 'sheet'), data),
-    updateSheet: (w, patch) => updateDoc(doc(db, 'walls', w, 'private', 'sheet'), Object.fromEntries(Object.entries(patch).map(([k, v]) => [k, v === null ? deleteField() : v]))),
+    // Tableau : privé (walls/{w}/private/sheet) ou partagé par mot de passe (walls/{w}/team/{clé})
+    watchSheet: (w, key, cb, err) => onSnapshot(sheetRef(w, key), s => cb(s.exists() ? s.data() : null), err || onErr),
+    async getSheet(w, key) { const s = await getDoc(sheetRef(w, key)); return s.exists() ? s.data() : null; },
+    initSheet: (w, data, key) => setDoc(sheetRef(w, key), data),
+    updateSheet: (w, patch, key) => updateDoc(sheetRef(w, key), Object.fromEntries(Object.entries(patch).map(([k, v]) => [k, v === null ? deleteField() : v]))),
+    deleteSheet: (w, key) => deleteDoc(sheetRef(w, key)),
+    async getMeta(w) { const s = await getDoc(doc(db, 'walls', w, 'private', 'meta')); return s.exists() ? s.data() : {}; },
+    setMeta: (w, data) => setDoc(doc(db, 'walls', w, 'private', 'meta'), data, { merge: true }),
     setPresence: w => setDoc(doc(db, 'presence', w), { lastSeen: serverTimestamp() }),
     clearPresence: w => deleteDoc(doc(db, 'presence', w)),
     async getPresence(w) { const s = await getDoc(doc(db, 'presence', w)); const v = s.exists() ? s.data().lastSeen : 0; return typeof v === 'number' ? v : (v?.toMillis?.() || 0); },
@@ -897,10 +909,14 @@ function makeDemoStore() {
     deleteComment: async (w, p, c) => { delete db.comments[c]; if (db.posts[p]) db.posts[p].cc = Math.max(0, (db.posts[p].cc || 1) - 1); emit(); },
     getTeacher: async uid => clone(db.teachers[uid] || { games: [] }),
     saveTeacher: async (uid, data) => { db.teachers[uid] = { ...(db.teachers[uid] || {}), ...clone(data) }; emit(); },
-    watchSheet: (w, cb) => sub(() => cb(db.sheets?.[w] ? clone(db.sheets[w]) : null)),
-    initSheet: async (w, data) => { db.sheets = db.sheets || {}; db.sheets[w] = clone(data); emit(); },
-    updateSheet: async (w, patch) => {
-      const sh = db.sheets?.[w]; if (!sh) return;
+    watchSheet: (w, key, cb) => sub(() => { const k = key ? w + '#' + key : w; cb(db.sheets?.[k] ? clone(db.sheets[k]) : null); }),
+    getSheet: async (w, key) => { const k = key ? w + '#' + key : w; return db.sheets?.[k] ? clone(db.sheets[k]) : null; },
+    initSheet: async (w, data, key) => { db.sheets = db.sheets || {}; db.sheets[key ? w + '#' + key : w] = clone(data); emit(); },
+    deleteSheet: async (w, key) => { if (db.sheets) delete db.sheets[key ? w + '#' + key : w]; emit(); },
+    getMeta: async w => clone(db.meta?.[w] || {}),
+    setMeta: async (w, data) => { db.meta = db.meta || {}; db.meta[w] = { ...(db.meta[w] || {}), ...clone(data) }; emit(); },
+    updateSheet: async (w, patch, key) => {
+      const sh = db.sheets?.[key ? w + '#' + key : w]; if (!sh) return;
       Object.entries(clone(patch)).forEach(([k, v]) => { if (v === null) { const ks = k.split('.'), last = ks.pop(); const o = ks.reduce((a, x) => a?.[x], sh); if (o) delete o[last]; } else setPath(sh, k, v); });
       emit();
     },
@@ -947,7 +963,8 @@ function go(q) { history.pushState({}, '', href(q)); route(); }
 function cleanup() {
   stopWallPresence();
   S.unsubs.forEach(u => { try { u && u(); } catch { } }); S.unsubs = [];
-  S.sheet = null; S.sheetLoaded = false; S.sheetInit = false; S.sheetEditing = false; S.sel = null; SH.undo = [];
+  if (S.sheetUnsub) { try { S.sheetUnsub(); } catch { } S.sheetUnsub = null; }
+  S.sheet = null; S.sheetLoaded = false; S.sheetInit = false; S.sheetEditing = false; S.sel = null; S.teamKey = null; SH.undo = [];
   S.wall = null; S.posts = []; S.postsLoaded = false; S.isOwner = false; S.preview = false; S.els = new Map(); S.lists = {}; S.ckey = null;
   if (S.trayEl) { S.trayEl.remove(); S.trayEl = null; }
   closeSpot();
@@ -1164,9 +1181,11 @@ function onWall(w) {
     S.unsubs.push(S.store.watchPosts(S.wallId, { owner: S.isOwner, uid: S.user.uid }, list => { S.posts = list; S.postsLoaded = true; renderPosts(); renderTray(); checkSpot(); }));
     if (S.isOwner) {
       loadTeacher().then(ensureNotify); startWallPresence();
-      S.unsubs.push(S.store.watchSheet(S.wallId, d => { S.sheetLoaded = true; S.sheet = d ? normSheet(d) : null; renderSheet(); }));
+      S.store.getMeta(S.wallId).then(m => { S.teamKey = m?.teamKey || null; subscribeSheet(); }).catch(() => subscribeSheet());
+    } else {
+      const k = readTeamKey(); if (k) { S.teamKey = k; subscribeSheet(); }
+      if (!S.wall.keepOpen) teacherAway().then(() => updateChrome());
     }
-    else if (!S.wall.keepOpen) teacherAway().then(() => updateChrome());
   }
   updateChrome(); renderPosts(); checkSpot();
 }
@@ -1216,7 +1235,7 @@ function visiblePosts() {
 }
 function ensureContainers() {
   const fmt = effFormat(), tm = teacherMode(), cp = canPost(), secs = S.wall.sections || [];
-  const key = JSON.stringify([fmt, tm, cp, fmt === 'columns' ? secs : 0]);
+  const key = JSON.stringify([fmt, tm, cp, fmt === 'columns' ? secs : 0, !!S.wall.teamSheet]);
   const scroll = $('#scroll'); if (!scroll) return;
   if (S.ckey === key && scroll.firstChild) return;
   S.ckey = key; scroll.innerHTML = ''; S.lists = {}; scroll.className = 'scroll f-' + fmt;
@@ -1234,7 +1253,7 @@ function ensureContainers() {
     scroll.appendChild(lanes);
   } else if (fmt === 'sheet') {
     const box = document.createElement('div'); box.className = 'sheet-page';
-    if (S.isOwner) { const wrap = document.createElement('section'); wrap.id = 'sheet'; wrap.className = 'sheet-wrap'; box.appendChild(wrap); bindSheet(wrap); }
+    if (S.isOwner || S.wall.teamSheet) { const wrap = document.createElement('section'); wrap.id = 'sheet'; wrap.className = 'sheet-wrap'; box.appendChild(wrap); bindSheet(wrap); }
     if (tm) { const h = document.createElement('div'); h.className = 'sheet-sub'; h.textContent = '📌 Consignes, barème & widgets (visibles par les élèves)'; box.appendChild(h); }
     const l = document.createElement('div'); l.className = 'list'; S.lists.main = l; box.appendChild(l); makeSortable(l);
     scroll.appendChild(box); renderSheet();
@@ -1660,7 +1679,9 @@ function cellHTML(row, col) {
 const statusOpts = col => String(col.options || '🟢, 🟠, 🔴').split(',').map(s => s.trim()).filter(Boolean);
 
 /* ---- écriture ---- */
-function shWrite(patch) { guard(() => S.store.updateSheet(S.wallId, patch)); }
+function shWrite(patch) { guard(() => S.store.updateSheet(S.wallId, patch, S.teamKey)); }
+// Propriétaire : selon le mode (pas en « Vue élève ») ; collègue : s'il a déverrouillé avec le mot de passe.
+const sheetMode = () => S.isOwner ? teacherMode() : !!S.teamKey;
 function setCells(changes, { undo = true } = {}) {
   // changes : [{ row, col, value }] ; value null/'' = vider
   const patch = {}, group = [];
@@ -1688,9 +1709,10 @@ const writeCols = () => { renderSheet(); shWrite({ cols: S.sheet.cols }); };
 /* ---- rendu ---- */
 function renderSheet() {
   const wrap = $('#sheet'); if (!wrap) return;
-  if (!teacherMode()) { wrap.innerHTML = '<p class="sheet-note">👁 Vue élève : le tableau de classe n’est jamais visible par les élèves. Ils ne voient que les cartes ci-dessous.</p>'; return; }
+  if (S.isOwner && !teacherMode()) { wrap.innerHTML = '<p class="sheet-note">👁 Vue élève : le tableau de classe n’est jamais visible par les élèves. Ils ne voient que les cartes ci-dessous.</p>'; return; }
+  if (!S.isOwner && !S.teamKey) { wrap.innerHTML = '<div class="sheet-lock"><div class="sl-ic">🔐</div><b>Tableau de classe réservé à l’équipe pédagogique</b><p class="muted">Vous enseignez dans cette classe ? Entrez le mot de passe donné par le collègue qui a créé le mur.</p><button type="button" class="btn primary" data-act="unlock">Déverrouiller le tableau</button></div>'; return; }
   if (!S.sheet) {
-    if (S.sheetLoaded && !S.sheetInit) { S.sheetInit = true; S.sheet = defaultSheet(); guard(() => S.store.initSheet(S.wallId, S.sheet)); }
+    if (S.isOwner && S.sheetLoaded && !S.sheetInit) { S.sheetInit = true; S.sheet = defaultSheet(); guard(() => S.store.initSheet(S.wallId, S.sheet, S.teamKey)); }
     else { wrap.innerHTML = '<p class="sheet-note">Chargement du tableau…</p>'; return; }
   }
   if (S.sheetEditing) { S.sheetDirty = true; return; }
@@ -1706,6 +1728,7 @@ function renderSheet() {
       <button type="button" class="btn" data-act="addcol">＋ Colonne</button>
       <button type="button" class="btn" data-act="sort" title="Trier les élèves par ordre alphabétique">A→Z</button>
       <span class="sp"></span>
+      ${S.isOwner ? `<button type="button" class="btn ${S.teamKey ? 'team-on' : ''}" data-act="team">${S.teamKey ? '👥 Partagé avec l’équipe' : '🔐 Partager avec l’équipe'}</button>` : '<button type="button" class="btn" data-act="lock" title="Refermer le tableau sur cet appareil">🔒 Verrouiller</button>'}
       <button type="button" class="btn" data-act="undo" title="Annuler (⌘Z)">↩︎</button>
       <button type="button" class="btn" data-act="reset">🧹 Remise à zéro</button>
       <button type="button" class="btn" data-act="export">⬇︎ Exporter (Excel)</button>
@@ -1807,7 +1830,7 @@ function copySel(e, cut) {
 }
 
 /* ---- événements (installés une fois) ---- */
-function sheetActive() { return !!$('#sheet') && teacherMode() && !!S.sheet && !$('.modal-back'); }
+function sheetActive() { return !!$('#sheet') && sheetMode() && !!S.sheet && !$('.modal-back'); }
 function bindSheet(wrap) {
   wrap.addEventListener('click', e => {
     const t = e.target;
@@ -1861,6 +1884,76 @@ function sheetAct(a) {
   if (a === 'undo') return undoSheet();
   if (a === 'reset') return openReset();
   if (a === 'export') return exportSheet();
+  if (a === 'unlock') return openUnlock();
+  if (a === 'lock') { forgetTeamKey(); subscribeSheet(); return toast('Tableau verrouillé sur cet appareil 🔒', 'ok'); }
+  if (a === 'team') return openTeam();
+}
+
+/* ---- partage avec l'équipe pédagogique (mot de passe) ---- */
+// Le mot de passe n'est jamais enregistré : il sert à calculer l'adresse secrète du tableau.
+async function teamKeyFor(pw) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('ew-team:' + S.wallId + ':' + pw));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+const TK = () => 'ew-team-' + S.wallId;
+function readTeamKey() { try { return sessionStorage.getItem(TK()) || localStorage.getItem(TK()); } catch { return null; } }
+function forgetTeamKey() { try { sessionStorage.removeItem(TK()); localStorage.removeItem(TK()); } catch { } S.teamKey = null; }
+function subscribeSheet() {
+  if (S.sheetUnsub) { try { S.sheetUnsub(); } catch { } S.sheetUnsub = null; }
+  S.sheet = null; S.sheetLoaded = false; S.sheetInit = false; S.sel = null; SH.undo = [];
+  if (!S.isOwner && !S.teamKey) return renderSheet();
+  const lost = () => { forgetTeamKey(); toast('Le mot de passe du tableau a changé : demandez le nouveau à votre collègue.', 'err'); subscribeSheet(); };
+  S.sheetUnsub = S.store.watchSheet(S.wallId, S.teamKey, d => {
+    S.sheetLoaded = true;
+    if (!d && !S.isOwner) return lost();
+    S.sheet = d ? normSheet(d) : null; renderSheet();
+  }, e => { console.error(e); if (!S.isOwner) lost(); else toast(errMsg(e), 'err'); });
+  renderSheet();
+}
+function openUnlock() {
+  const root = document.createElement('div');
+  root.innerHTML = `<label class="f">Mot de passe de l’équipe</label><input id="tm-pw" type="password" autocomplete="current-password">
+    <label class="chk"><input type="checkbox" id="tm-rem"> Se souvenir sur cet appareil (à éviter sur un ordinateur partagé)</label>`;
+  const m = modal({ title: '🔐 Tableau de classe', body: root, actions: [{ label: 'Annuler' }, { label: 'Déverrouiller', cls: 'primary', onClick: async () => {
+    const pw = $('#tm-pw', root).value; if (!pw) fail('Entrez le mot de passe.');
+    const key = await teamKeyFor(pw);
+    if (!(await S.store.getSheet(S.wallId, key))) fail('Mot de passe incorrect.');
+    try { ($('#tm-rem', root).checked ? localStorage : sessionStorage).setItem(TK(), key); } catch { }
+    S.teamKey = key; subscribeSheet(); toast('Tableau déverrouillé ✓', 'ok');
+  } }] });
+  const i = $('#tm-pw', root); setTimeout(() => i.focus(), 50); i.onkeydown = e => { if (e.key === 'Enter') $('.modal-actions .primary', m.root).click(); };
+}
+function openTeam() {
+  const shared = !!S.teamKey, link = shareLink();
+  const root = document.createElement('div');
+  root.innerHTML = (shared
+    ? `<p>✅ <b>Ce tableau est partagé avec l’équipe pédagogique.</b> Les collègues qui ont le mot de passe peuvent le lire et le remplir ; les élèves ne voient toujours que les cartes.</p>`
+    : `<p>Choisissez un mot de passe et donnez-le aux collègues de la classe : ils pourront <b>lire et remplir</b> le tableau. Les élèves ne pourront toujours pas y accéder.</p>`)
+    + `<div class="share-steps"><b>Ce que font vos collègues :</b><ol><li>Ils ouvrent le mur : code <b class="code">${esc(S.wallId)}</b> sur la page d’accueil, ou ce lien : <a href="${esc(link)}" target="_blank" rel="noopener">${esc(shortUrl(link))}</a></li><li>Ils saisissent leur nom (ex. « Mme Dupont »), sans compte Google.</li><li>Ils cliquent sur <b>Déverrouiller le tableau</b> et entrent le mot de passe.</li></ol></div>`
+    + `<label class="f">${shared ? 'Changer le mot de passe (les anciens accès seront coupés)' : 'Mot de passe (8 caractères minimum)'}</label><input id="tp1" type="password" autocomplete="new-password" placeholder="Ex : une petite phrase facile à retenir">
+       <label class="f">Confirmer</label><input id="tp2" type="password" autocomplete="new-password">
+       <p class="muted small">Le mot de passe n’est enregistré nulle part : notez-le. En cas d’oubli, il suffit d’en choisir un nouveau ici.</p>`
+    + (shared ? `<button type="button" class="btn danger" id="tp-stop" style="margin-top:6px">Arrêter le partage (tableau de nouveau réservé à moi)</button>` : '');
+  const m = modal({ title: '👥 Partager le tableau avec l’équipe', body: root, wide: true, actions: [{ label: 'Fermer' }, { label: shared ? 'Changer le mot de passe' : 'Activer le partage', cls: 'primary', onClick: async () => {
+    const a = $('#tp1', root).value, b = $('#tp2', root).value;
+    if (a.length < 8) fail('Le mot de passe doit faire au moins 8 caractères.');
+    if (a !== b) fail('Les deux mots de passe ne sont pas identiques.');
+    await moveSheet(await teamKeyFor(a));
+    toast(shared ? 'Mot de passe changé ✓ Donnez le nouveau à vos collègues.' : 'Partage activé ✓ Donnez le code du mur et le mot de passe à vos collègues.', 'ok');
+  } }] });
+  const st = $('#tp-stop', root);
+  if (st) st.onclick = async () => { if (!(await confirmBox('Arrêter le partage ? Les collègues ne pourront plus ouvrir le tableau.', 'Arrêter le partage'))) return; await guard(async () => { await moveSheet(null); toast('Le tableau est de nouveau réservé à vous seul 🔒', 'ok'); }); m.close(); };
+}
+// Déplace le tableau vers sa nouvelle adresse (clé d'équipe, ou espace privé si key = null).
+async function moveSheet(key) {
+  const old = S.teamKey ?? null;
+  if (key === old) fail('C’est déjà le mot de passe actuel.');
+  const data = clean(S.sheet || defaultSheet());
+  await S.store.initSheet(S.wallId, data, key);
+  await S.store.setMeta(S.wallId, { teamKey: key || null });
+  await S.store.updateWall(S.wallId, { teamSheet: !!key, updatedAt: Date.now() });
+  await S.store.deleteSheet(S.wallId, old).catch(() => { });
+  S.teamKey = key; subscribeSheet();
 }
 async function deleteRow(id) {
   const row = shRows().find(r => r.id === id); if (!row) return;
