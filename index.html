@@ -362,6 +362,19 @@ audio{width:100%;margin:.3em 0;display:block}
 .cm-form{display:flex;gap:8px}
 .lightbox{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:300;display:flex;align-items:center;justify-content:center;cursor:zoom-out;padding:20px}
 .lightbox img{max-width:100%;max-height:100%;border-radius:10px}
+.comic-cover{position:relative;cursor:pointer;border-radius:10px;overflow:hidden;background:#fff;margin-bottom:6px}
+.comic-cover img{display:block;width:100%;height:auto}
+.comic-badge{position:absolute;right:8px;bottom:8px;background:#ffd23f;color:#2a2100;font-weight:800;font-size:.85rem;padding:4px 10px;border-radius:999px;border:2px solid #17171f;box-shadow:2px 2px 0 #17171f}
+.comic-cover:hover .comic-badge{transform:scale(1.06)}
+.comic-go{text-align:center;padding:10px 6px}.comic-go .cg-ico{font-size:3rem}.comic-go p{line-height:1.5}
+.comic-edit{display:flex;align-items:center;gap:12px;margin-bottom:8px}.comic-edit img{width:90px;border-radius:6px;border:1px solid #ddd}
+.comic-reader{position:fixed;inset:0;z-index:320;background:rgba(12,12,20,.94);display:flex;flex-direction:column;color:#fff}
+.cr-top{display:flex;align-items:center;gap:10px;padding:10px 14px}.cr-top .sp{flex:1}.cr-by{opacity:.7}
+.cr-b{background:rgba(255,255,255,.12);border:0;color:#fff;border-radius:10px;width:42px;height:42px;font-size:1.1rem;cursor:pointer}
+.cr-stage{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;min-height:0;padding:0 8px}
+.cr-stage img{max-width:min(100%,1000px);max-height:100%;object-fit:contain;border-radius:4px;background:#fff;touch-action:pan-y;user-select:none;-webkit-user-drag:none}
+.cr-nav{background:rgba(255,255,255,.14);border:0;color:#fff;font-size:2.4rem;width:52px;height:80px;border-radius:12px;cursor:pointer;flex:none}
+.cr-count{text-align:center;padding:8px 0 14px;opacity:.8;min-height:20px}
 .loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-family:Fredoka;font-size:1.4rem;color:#6b7086}
 </style>
 </head>
@@ -802,7 +815,7 @@ const COLORS = { white: '#ffffff', yellow: '#fff6bf', pink: '#ffe1ea', blue: '#d
 const HL = { red: '#e11d48', yellow: '#f59e0b', blue: '#2563eb', green: '#16a34a', purple: '#7c3aed' };
 const TYPES = {
   text: { icon: '📝', label: 'Texte' }, highlight: { icon: '🟥', label: 'Encadré', teacher: true },
-  image: { icon: '🖼️', label: 'Image' }, audio: { icon: '🎙️', label: 'Audio' }, link: { icon: '🔗', label: 'Lien' }, youtube: { icon: '▶️', label: 'Vidéo' },
+  image: { icon: '🖼️', label: 'Image' }, comic: { icon: '📚', label: 'BD' }, audio: { icon: '🎙️', label: 'Audio' }, link: { icon: '🔗', label: 'Lien' }, youtube: { icon: '▶️', label: 'Vidéo' },
   clock: { icon: '🕐', label: 'Horloge', teacher: true, widget: true }, timer: { icon: '⏳', label: 'Minuteur', teacher: true, widget: true },
   stopwatch: { icon: '⏱️', label: 'Chrono', teacher: true, widget: true }, quizlet: { icon: '🃏', label: 'Quizlet', teacher: true, widget: true },
   embed: { icon: '🎮', label: 'Jeu / intégration', teacher: true, widget: true },
@@ -1313,7 +1326,7 @@ function cardEl(p) {
 }
 function bodySig(p) {
   let w = null; if (p.widget) { w = { ...p.widget }; ['running', 'endsAt', 'remaining', 'startedAt', 'acc'].forEach(k => delete w[k]); }
-  return JSON.stringify([p.type, p.title, p.body, p.html, p.preview, p.color, p.size, p.fs, p.hl, p.icon, p.pulse, p.url, p.yt, (p.img || '').length, (p.img || '').slice(-32), (p.audio || '').length, w, p.hidden, p.armed, p.trigger, p.status, teacherMode(), isAuthor(p), effFormat()]);
+  return JSON.stringify([p.type, p.title, p.body, p.html, p.preview, p.color, p.size, p.fs, p.hl, p.icon, p.pulse, p.url, p.yt, (p.img || '').length, (p.img || '').slice(-32), (p.pages || []).length, (p.audio || '').length, w, p.hidden, p.armed, p.trigger, p.status, teacherMode(), isAuthor(p), effFormat()]);
 }
 function footSig(p) { const w = S.wall; return JSON.stringify([Object.keys(p.likes || {}).length, !!(p.likes || {})[S.user?.uid], p.cc || 0, w.allowLikes, w.allowComments, w.showAuthors, teacherMode(), p.authorName]); }
 function fillCard(el, p) {
@@ -1350,6 +1363,7 @@ function bodyHTML(p, tm) {
   switch (p.type) {
     case 'text': return T + R;
     case 'highlight': return `<div class="hl-inner">${p.icon ? `<div class="hl-icon">${esc(p.icon)}</div>` : ''}${T}${R}</div>`;
+    case 'comic': return `<div class="comic-cover" data-a="read" title="Lire la BD">${p.img ? `<img src="${p.img}" alt="${esc(p.title || 'BD')}" loading="lazy">` : ''}<span class="comic-badge">📖 Lire${(p.pages || []).length ? ` · ${1 + p.pages.length} pages` : ''}</span></div>` + T;
     case 'image': return (p.img ? `<img class="pimg" src="${p.img}" alt="${esc(p.title || 'image')}" loading="lazy">` : '') + T + B;
     case 'audio': return T + (p.audio ? `<audio controls preload="metadata" src="${p.audio}"></audio>` : '') + B;
     case 'link': return linkCardHTML(p.url, p.preview, p.title) + B;
@@ -1382,6 +1396,7 @@ async function cardAction(p, a, el) {
   if (a === 'hide') { const v = !p.hidden; p.hidden = v; el._sig = null; cardEl(p); return guard(() => S.store.updatePost(S.wallId, p.id, { hidden: v })); }
   if (a === 'del') { if (await confirmBox('Supprimer cette publication ?', 'Supprimer')) guard(() => S.store.deletePost(S.wallId, p.id)); return; }
   if (a === 'spot') return showSpot(p);
+  if (a === 'read') return openComic(p);
   if (a === 'fs') { const t = $('.emb', el) || el; (t.requestFullscreen || t.webkitRequestFullscreen)?.call(t); }
 }
 function bindFreeDrag(el) {
@@ -2070,6 +2085,8 @@ function fieldsHTML(type, d, owner) {
   switch (type) {
     case 'text': return T() + rteHTML(d, 'Écris ici… (colle un lien seul pour créer une vignette)') + row(fs, size) + colors + sec;
     case 'highlight': return T('Ex : Homework for Monday!') + rteHTML(d, 'Message important…') + `<label class="f">Couleur du cadre</label><div class="swatches">${Object.entries(HL).map(([k, c]) => `<label class="sw" style="--c:${c}"><input type="radio" name="hl" value="${k}" ${(d.hl || 'red') === k ? 'checked' : ''}><span></span></label>`).join('')}</div>` + row(`<div><label class="f">Icône</label><select name="icon">${['', '⚠️', '⭐', '📌', '❗', '💡', '🎯', '📣', '📅', '✅'].map(i => `<option value="${i}" ${(d.icon || '') === i ? 'selected' : ''}>${i || 'Aucune'}</option>`).join('')}</select></div>`, fs) + row(size) + `<label class="chk"><input type="checkbox" name="pulse" ${d.pulse ? 'checked' : ''}> Faire pulser le cadre pour attirer l'attention</label>` + triggerFields(d) + colors + sec;
+    case 'comic': return d.img ? `<div class="comic-edit"><img src="${d.img}" alt=""><span>📚 ${1 + (d.pages || []).length} page(s)</span></div>` + T('Titre de la BD') + row(size) + colors + sec
+      : `<div class="comic-go"><div class="cg-ico">📚</div><p><b>Crée ta bande dessinée</b> dans l’atelier BD : cases, personnages, bulles, décors… Quand elle est prête, clique sur <b>« 📤 Publier sur le mur »</b> : elle arrivera ici.</p><button type="button" class="btn primary wide" id="open-bd">🎨 Ouvrir l’atelier BD</button></div>`;
     case 'image': return `<div class="drop" id="img-drop"><div id="img-prev">${d.img ? `<img src="${d.img}" alt="">` : '🖼️<br>Choisir une photo<br><small>ou coller une image (⌘V)</small>'}</div><input type="file" accept="image/*" id="img-file" hidden></div>` + T('Légende (facultatif)') + B('Description (facultatif)') + row(size) + colors + sec;
     case 'audio': return `<div class="rec"><button type="button" class="btn primary" id="rec-btn">⏺ Enregistrer</button><span id="rec-t" class="muted"></span><label class="btn" for="aud-file">📁 Choisir un fichier</label><input type="file" accept="audio/*" id="aud-file" hidden></div><div id="aud-prev" style="margin-top:10px">${d.audio ? `<audio controls src="${d.audio}"></audio>` : ''}</div><p class="muted small">90 secondes maximum.</p>` + T() + B('Description (facultatif)') + colors + sec;
     case 'link': return `<label class="f">Adresse du lien</label><input name="url" type="url" inputmode="url" placeholder="https://…" value="${esc(d.url || '')}"><div id="pv-box"></div>` + T('Titre (facultatif : sinon celui du site)') + B('Description (facultatif)') + row(size) + colors + sec;
@@ -2101,6 +2118,8 @@ function openEditor(post, opts = {}) {
   function draw() {
     $$('.chip', root).forEach(c => c.classList.toggle('on', c.dataset.type === type));
     fields.innerHTML = fieldsHTML(type, d, owner);
+    const obd = $('#open-bd', fields);
+    if (obd) obd.onclick = () => { collect(); openComicLab(d.sectionId || opts.sectionId); $$('.modal-back').forEach(m => m.remove()); };
     if (type === 'image') {
       const drop = $('#img-drop', fields), file = $('#img-file', fields);
       const take = async f => { if (!f || !f.type.startsWith('image/')) return; $('#img-prev', fields).innerHTML = '⏳ Préparation…'; try { media.img = await compressImage(f); d.img = media.img; $('#img-prev', fields).innerHTML = `<img src="${media.img}" alt="">`; } catch (e) { toast("Image illisible.", 'err'); $('#img-prev', fields).textContent = '🖼️ Choisir une photo'; } };
@@ -2177,6 +2196,7 @@ async function savePost(type, d, media, post, opts) {
       break;
     }
     case 'image': if (!media.img) fail('Choisis une image.'); base.img = media.img; break;
+    case 'comic': if (!editing) fail('Crée ta BD dans l’atelier BD, puis clique sur « Publier sur le mur ».'); base.img = post.img; base.pages = post.pages || []; break;
     case 'audio': if (!media.audio) fail("Enregistre ou choisis un son."); base.audio = media.audio; break;
     case 'link': { let u = (d.url || '').trim(); if (!u) fail('Colle une adresse.'); if (!/^https?:\/\//i.test(u)) u = 'https://' + u; try { new URL(u); } catch { fail('Adresse invalide.'); } base.url = u; base.preview = (d.previewFor === u && d.preview) ? d.preview : (await getPreview(u)) || null; break; }
     case 'youtube': { const id = ytId(d.url); if (!id) fail('Lien YouTube non reconnu.'); base.url = d.url.trim(); base.yt = id; break; }
@@ -2187,7 +2207,7 @@ async function savePost(type, d, media, post, opts) {
     case 'embed': { const u = embedUrl(d.url); if (!u) fail("Adresse ou code d'intégration invalide."); base.url = u; base.widget = { url: u }; break; }
   }
   if ((base.html || '').length > 40000) fail('Texte trop long.');
-  if ((base.img || '').length + (base.audio || '').length > 980000) fail('Fichier trop lourd. Essaie une image plus petite ou un son plus court.');
+  if ((base.img || '').length + (base.audio || '').length + (base.pages || []).reduce((n, x) => n + x.length, 0) > 980000) fail('Fichier trop lourd. Essaie une image plus petite ou un son plus court.');
   if (editing) { await S.store.updatePost(S.wallId, post.id, clean(base)); toast('Modifié ✓', 'ok'); }
   else {
     if (!owner && S.wall.studentMode === 'closed') fail('Les publications sont fermées pour le moment.');
@@ -2237,9 +2257,39 @@ function openComments(p) {
 
 /* ---------------- modération ---------------- */
 function toggleTray() { if (S.trayEl) { S.trayEl.remove(); S.trayEl = null; return; } S.trayEl = document.createElement('aside'); S.trayEl.className = 'tray'; document.body.appendChild(S.trayEl); renderTray(); }
+/* ---------------- BD (atelier Comic Lab + liseuse) ---------------- */
+function openComicLab(sectionId) {
+  const u = new URL('bd.html', location.href); u.search = ''; u.searchParams.set('w', S.wallId); if (sectionId) u.searchParams.set('s', sectionId);
+  const win = window.open(u.toString(), '_blank'); if (!win) location.href = u.toString();
+}
+function openComic(p) {
+  if (!p) return; const pages = [p.img, ...(p.pages || [])].filter(Boolean); let i = 0;
+  const d = document.createElement('div'); d.className = 'comic-reader';
+  d.innerHTML = `<div class="cr-top"><b>${esc(p.title || 'BD')}</b><span class="cr-by">${esc(p.authorName || '')}</span><span class="sp"></span><button class="cr-b" data-c="print" title="Imprimer">🖨️</button><button class="cr-b" data-c="fs" title="Plein écran">⛶</button><button class="cr-b" data-c="x" title="Fermer">✕</button></div>
+    <div class="cr-stage"><button class="cr-nav" data-c="prev" aria-label="Page précédente">‹</button><img alt=""><button class="cr-nav" data-c="next" aria-label="Page suivante">›</button></div><div class="cr-count"></div>`;
+  const img = $('img', d), cnt = $('.cr-count', d);
+  const show = n => { i = Math.max(0, Math.min(pages.length - 1, n)); img.src = pages[i]; cnt.textContent = pages.length > 1 ? `Page ${i + 1} / ${pages.length}` : ''; $('[data-c=prev]', d).style.visibility = i ? '' : 'hidden'; $('[data-c=next]', d).style.visibility = i < pages.length - 1 ? '' : 'hidden'; };
+  const close = () => { d.remove(); document.removeEventListener('keydown', key); if (document.fullscreenElement) document.exitFullscreen?.(); };
+  const key = e => { if (e.key === 'ArrowRight') show(i + 1); else if (e.key === 'ArrowLeft') show(i - 1); else if (e.key === 'Escape') close(); };
+  d.onclick = e => {
+    const c = e.target.closest('[data-c]')?.dataset.c;
+    if (c === 'prev') show(i - 1); else if (c === 'next') show(i + 1); else if (c === 'x') close();
+    else if (c === 'fs') (d.requestFullscreen || d.webkitRequestFullscreen)?.call(d);
+    else if (c === 'print') printComic(p.title, pages);
+    else if (e.target === d || e.target.classList.contains('cr-stage')) close();
+  };
+  let x0 = null; img.addEventListener('pointerdown', e => { x0 = e.clientX; }); img.addEventListener('pointerup', e => { if (x0 == null) return; const dx = e.clientX - x0; x0 = null; if (Math.abs(dx) > 40) show(i + (dx < 0 ? 1 : -1)); else show(i + 1); });
+  document.addEventListener('keydown', key); document.body.appendChild(d); show(0);
+}
+function printComic(title, pages) {
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(title || 'BD')}</title><style>@page{margin:8mm}body{margin:0}img{display:block;max-width:100%;max-height:96vh;margin:0 auto;page-break-after:always}img:last-child{page-break-after:auto}</style></head><body>${pages.map(s => `<img src="${s}">`).join('')}<script>window.onload=()=>setTimeout(()=>{print()},300)<\/script></body></html>`;
+  const w = window.open('', '_blank'); if (w) { w.document.write(html); w.document.close(); return; }
+  const f = document.createElement('iframe'); f.style.cssText = 'position:fixed;width:0;height:0;border:0'; document.body.appendChild(f); f.srcdoc = html; setTimeout(() => f.remove(), 60000);
+}
 function previewHTML(p) {
   let h = p.title ? `<b>${esc(p.title)}</b><br>` : '';
   if (p.img) h += `<img src="${p.img}" alt=""><br>`;
+  if (p.type === 'comic') h += `📚 BD de ${1 + (p.pages || []).length} page(s) · <a href="#" onclick="event.preventDefault();openComic(S.posts.find(x=>x.id==='${esc(p.id)}'))">lire</a><br>`;
   if (p.audio) h += `<audio controls src="${p.audio}"></audio>`;
   if (p.url) h += `<a href="${esc(p.url)}" target="_blank" rel="noopener" title="${esc(p.url)}">${esc(shortUrl(p.url))}</a><br>`;
   if (p.body) h += esc(p.body);
