@@ -2424,6 +2424,16 @@ async function encodePages(onStep) {
   }
   throw new Error('toobig');
 }
+async function stackPages(urls) {
+  const ims = await Promise.all(urls.map(loadImg));
+  for (const [w, q] of [[900, .72], [760, .64], [640, .56], [540, .5]]) {
+    const hs = ims.map(i => i.naturalHeight * w / i.naturalWidth), gap = 16, H = hs.reduce((a, b) => a + b, 0) + gap * (ims.length - 1);
+    const c = document.createElement('canvas'); c.width = w; c.height = Math.round(H); const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, w, c.height);
+    let y = 0; ims.forEach((im, k) => { x.drawImage(im, 0, y, w, hs[k]); y += hs[k] + gap; });
+    const u = c.toDataURL('image/jpeg', q); if (u.length < 900000) return u;
+  }
+  throw new Error('toobig');
+}
 async function doPublish() {
   const step = t => { const el = $('#pubSteps'); if (el) el.textContent = t; };
   const btn = $('#pubGo'); btn.disabled = true;
@@ -2449,7 +2459,16 @@ async function doPublish() {
     if ((wall.format || 'columns') === 'columns') post.sectionId = (WALL_SEC && (wall.sections || []).some(s => s.id === WALL_SEC)) ? WALL_SEC : ((wall.sections || [])[0]?.id || 's1');
     if (wall.format === 'free') { post.w = 300; post.x = Math.round(40 + Math.random() * 300); post.y = Math.round(40 + Math.random() * 200); }
     if (away) post.auto = true;
-    await F.addDoc(F.collection(db, 'walls', WALL, 'posts'), post);
+    try { await F.addDoc(F.collection(db, 'walls', WALL, 'posts'), post); }
+    catch (err) {
+      if (!String(err?.code || '').includes('permission-denied')) throw err;
+      // Les règles du mur n'acceptent pas (encore) le type « BD » : on publie la BD comme une image (pages les unes sous les autres).
+      step('📤 Envoi sous forme d’image…');
+      const img = await stackPages(urls);
+      const p2 = { ...post, type: 'image', img }; delete p2.pages;
+      try { await F.addDoc(F.collection(db, 'walls', WALL, 'posts'), p2); post.status = p2.status; }
+      catch (e2) { e2.rules = true; throw e2; }
+    }
     if (away && wall.notify?.on && GAS_RE.test(wall.notify.url || '')) fetch(wall.notify.url, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ wall: WALL, title: wall.title, author: post.authorName, pending: post.status === 'pending', keepOpen: true, snippet: '📚 BD : ' + post.title, link: wallUrl() }) }).catch(() => { });
     $('#pubTitle').textContent = '🎉 BD publiée !';
     $('#pubBody').innerHTML = `<p>${post.status === 'pending' ? 'Ta BD est arrivée sur le mur. Elle apparaîtra dès que le professeur l’aura validée. ⏳' : 'Ta BD est maintenant sur le mur. Toute la classe peut la lire !'}</p>
@@ -2460,7 +2479,8 @@ async function doPublish() {
     console.error(e); btn.disabled = false;
     const c = String(e?.code || e?.message || '');
     step(c === 'closed' ? '🔒 Les publications sont fermées pour le moment sur ce mur.'
-      : c === 'away' || c.includes('permission-denied') ? '🔒 Le professeur n’est pas sur le mur : les publications sont fermées pour le moment. Réessaie plus tard (ta BD reste enregistrée ici).'
+      : e?.rules ? '⛔ Le mur a refusé la publication (règles de sécurité Firebase). Préviens ton professeur.'
+      : c === 'away' ? '🔒 Le professeur n’est pas sur le mur : les publications sont fermées pour le moment. Réessaie plus tard (ta BD reste enregistrée ici).'
       : c === 'nowall' ? '❓ Ce mur n’existe pas ou plus. Vérifie le lien avec ton professeur.'
       : c === 'toobig' ? '📦 Ta BD est trop lourde pour être envoyée (trop de pages). Essaie avec moins de pages.'
       : c.includes('Failed to fetch') || c.includes('import') || c.includes('unavailable') ? '📡 Pas de connexion avec le mur. Vérifie Internet, puis réessaie.'
