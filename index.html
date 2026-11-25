@@ -854,7 +854,9 @@ async function makeFirebaseStore() {
     wallExists: async id => (await getDoc(wallRef(id))).exists(),
     createWall: (id, data) => setDoc(wallRef(id), data),
     updateWall: (id, patch) => updateDoc(wallRef(id), patch),
-    async deleteWall(id) { const ps = await getDocs(postsCol(id)); await chunked(ps.docs.map(d => d.ref), (b, ref) => b.delete(ref)); await deleteDoc(doc(db, 'walls', id, 'private', 'sheet')).catch(() => { }); try { const m = await getDoc(doc(db, 'walls', id, 'private', 'meta')); if (m.exists() && m.data().teamKey) await deleteDoc(sheetRef(id, m.data().teamKey)); await deleteDoc(doc(db, 'walls', id, 'private', 'meta')); } catch { } await deleteDoc(wallRef(id)); },
+    deleteDraft: code => deleteDoc(doc(db, 'bdDrafts', code)),
+    async listDrafts(w) { const s = await getDocs(query(collection(db, 'bdDrafts'), where('wall', '==', w))); return s.docs.map(d => ({ code: d.id, title: d.data().title, author: d.data().author, updatedAt: d.data().updatedAt })); },
+    async deleteWall(id) { try { const ds = await getDocs(query(collection(db, 'bdDrafts'), where('wall', '==', id))); await chunked(ds.docs.map(d => d.ref), (b, ref) => b.delete(ref)); } catch { } const ps = await getDocs(postsCol(id)); await chunked(ps.docs.map(d => d.ref), (b, ref) => b.delete(ref)); await deleteDoc(doc(db, 'walls', id, 'private', 'sheet')).catch(() => { }); try { const m = await getDoc(doc(db, 'walls', id, 'private', 'meta')); if (m.exists() && m.data().teamKey) await deleteDoc(sheetRef(id, m.data().teamKey)); await deleteDoc(doc(db, 'walls', id, 'private', 'meta')); } catch { } await deleteDoc(wallRef(id)); },
     watchWall: (id, cb, err) => onSnapshot(wallRef(id), s => cb(s.exists() ? { id: s.id, ...s.data() } : null), err || onErr),
     watchPosts(w, { owner, uid }, cb) {
       if (owner) return onSnapshot(postsCol(w), s => cb(docs(s)), onErr);
@@ -908,6 +910,7 @@ function makeDemoStore() {
     wallExists: async id => !!db.walls[id],
     createWall: async (id, data) => { db.walls[id] = { id, ...clone(data) }; emit(); },
     updateWall: async (id, patch) => { Object.entries(clone(patch)).forEach(([k, v]) => setPath(db.walls[id], k, v)); emit(); },
+    deleteDraft: async c => { try { localStorage.setItem('ew-demo-dd', c); } catch { } }, listDrafts: async () => [],
     deleteWall: async id => { delete db.walls[id]; Object.keys(db.posts).forEach(k => { if (db.posts[k].wallId === id) delete db.posts[k]; }); emit(); },
     watchWall: (id, cb) => sub(() => cb(db.walls[id] ? clone(db.walls[id]) : null)),
     watchPosts: (w, o, cb) => sub(() => cb(Object.values(db.posts).filter(p => p.wallId === w).map(clone))),
@@ -1395,7 +1398,7 @@ function fillFoot(el, p) {
 async function cardAction(p, a, el) {
   if (a === 'edit') return openEditor(p);
   if (a === 'hide') { const v = !p.hidden; p.hidden = v; el._sig = null; cardEl(p); return guard(() => S.store.updatePost(S.wallId, p.id, { hidden: v })); }
-  if (a === 'del') { if (await confirmBox('Supprimer cette publication ?', 'Supprimer')) guard(() => S.store.deletePost(S.wallId, p.id)); return; }
+  if (a === 'del') { if (await confirmBox(p.draft ? 'Supprimer cette BD ? Sa sauvegarde en ligne sera aussi effacée.' : 'Supprimer cette publication ?', 'Supprimer')) guard(async () => { await S.store.deletePost(S.wallId, p.id); dropDrafts([p]); }); return; }
   if (a === 'spot') return showSpot(p);
   if (a === 'read') return openComic(p);
   if (a === 'editbd') { const u = new URL('bd.html', location.href); u.search = ''; u.searchParams.set('w', S.wallId); u.searchParams.set('code', p.draft); u.searchParams.set('post', p.id); if (p.sectionId) u.searchParams.set('s', p.sectionId); const w = window.open(u.toString(), '_blank'); if (!w) location.href = u.toString(); return; }
@@ -2260,6 +2263,12 @@ function openComments(p) {
 /* ---------------- modération ---------------- */
 function toggleTray() { if (S.trayEl) { S.trayEl.remove(); S.trayEl = null; return; } S.trayEl = document.createElement('aside'); S.trayEl.className = 'tray'; document.body.appendChild(S.trayEl); renderTray(); }
 /* ---------------- BD (atelier Comic Lab + liseuse) ---------------- */
+// Supprime aussi la sauvegarde en ligne de la BD (si plus aucune autre publication ne l'utilise).
+function dropDrafts(posts) {
+  const gone = new Set(posts.map(p => p.id));
+  const codes = [...new Set(posts.map(p => p.draft).filter(Boolean))].filter(c => !S.posts.some(q => q.draft === c && !gone.has(q.id)));
+  codes.forEach(c => S.store.deleteDraft?.(c).catch(() => { }));
+}
 function openComicLab(sectionId) {
   const u = new URL('bd.html', location.href); u.search = ''; u.searchParams.set('w', S.wallId); if (sectionId) u.searchParams.set('s', sectionId);
   const win = window.open(u.toString(), '_blank'); if (!win) location.href = u.toString();
@@ -2291,7 +2300,7 @@ function printComic(title, pages) {
 function previewHTML(p) {
   let h = p.title ? `<b>${esc(p.title)}</b><br>` : '';
   if (p.img) h += `<img src="${p.img}" alt=""><br>`;
-  if (p.type === 'comic') h += `📚 BD de ${1 + (p.pages || []).length} page(s) · <a href="#" onclick="event.preventDefault();openComic(S.posts.find(x=>x.id==='${esc(p.id)}'))">lire</a><br>`;
+  if (p.type === 'comic') h += `📚 BD de ${1 + (p.pages || []).length} page(s) · <a href="#" data-read="${esc(p.id)}">lire</a><br>`;
   if (p.audio) h += `<audio controls src="${p.audio}"></audio>`;
   if (p.url) h += `<a href="${esc(p.url)}" target="_blank" rel="noopener" title="${esc(p.url)}">${esc(shortUrl(p.url))}</a><br>`;
   if (p.body) h += esc(p.body);
@@ -2304,12 +2313,13 @@ function renderTray() {
     ${pend.length > 1 ? '<div class="tray-actions"><button class="btn small blue" id="ok-all">✓ Tout valider</button></div>' : ''}
     <div class="tray-list">${pend.length ? pend.map(p => `<div class="tray-item" data-id="${esc(p.id)}"><div class="ti-meta"><b>${esc(p.authorName || 'Élève')}</b> · ${TYPES[p.type]?.icon || ''} ${esc(TYPES[p.type]?.label || '')}${p.auto ? ' · <span class="badge b-hidden">🔒 publiée en votre absence</span>' : ''}</div><div class="ti-prev">${previewHTML(p)}</div><div class="ti-btns"><button class="btn small blue" data-t="ok">✓ Valider</button><button class="btn small" data-t="hide">✓ Valider, mais cacher</button><button class="btn small danger" data-t="no">✕ Refuser</button></div></div>`).join('') : '<p class="muted">Rien en attente 🎉</p>'}</div>`;
   $('.x', t).onclick = toggleTray;
+  $$('[data-read]', t).forEach(a => a.onclick = e => { e.preventDefault(); openComic(S.posts.find(x => x.id === a.dataset.read)); });
   const all = $('#ok-all', t); if (all) all.onclick = () => guard(() => S.store.batchUpdate(S.wallId, pend.map(p => p.id), { status: 'approved' }));
   $$('.tray-item', t).forEach(it => $$('[data-t]', it).forEach(b => b.onclick = async () => {
     const id = it.dataset.id, a = b.dataset.t;
     if (a === 'ok') guard(() => S.store.updatePost(S.wallId, id, { status: 'approved' }));
     if (a === 'hide') guard(() => S.store.updatePost(S.wallId, id, { status: 'approved', hidden: true }));
-    if (a === 'no') guard(() => S.store.deletePost(S.wallId, id));
+    if (a === 'no') guard(async () => { const p = S.posts.find(x => x.id === id); await S.store.deletePost(S.wallId, id); if (p) dropDrafts([p]); });
   }));
 }
 
@@ -2372,10 +2382,17 @@ function openSettings() {
       $('#sec-add', pane).onclick = () => { read(); w.sections.push({ id: 's' + genId(), title: 'New column' }); draw(); };
     } else {
       const visible = S.posts.filter(p => p.status === 'approved');
-      pane.innerHTML = `<div class="act-list"><button class="btn" id="a-hide">🙈 Cacher toutes les publications</button><button class="btn" id="a-show">👁 Révéler toutes les publications</button><button class="btn" id="a-stud">🧹 Supprimer toutes les publications des élèves</button><button class="btn danger" id="a-del">🗑 Supprimer ce mur définitivement</button></div><p class="muted small">Ces actions s'appliquent immédiatement.</p>`;
+      pane.innerHTML = `<div class="act-list"><button class="btn" id="a-hide">🙈 Cacher toutes les publications</button><button class="btn" id="a-show">👁 Révéler toutes les publications</button><button class="btn" id="a-stud">🧹 Supprimer toutes les publications des élèves</button><button class="btn" id="a-bd">📚 Supprimer toutes les BD (publiées + sauvegardes en ligne)</button><button class="btn danger" id="a-del">🗑 Supprimer ce mur définitivement</button></div><p class="muted small">Ces actions s'appliquent immédiatement.</p>`;
       $('#a-hide', pane).onclick = () => guard(async () => { await S.store.batchUpdate(S.wallId, visible.filter(p => !p.hidden).map(p => p.id), { hidden: true }); toast('Toutes les publications sont cachées.', 'ok'); });
       $('#a-show', pane).onclick = () => guard(async () => { await S.store.batchUpdate(S.wallId, visible.filter(p => p.hidden).map(p => p.id), { hidden: false }); toast('Toutes les publications sont visibles.', 'ok'); });
-      $('#a-stud', pane).onclick = async () => { const ids = S.posts.filter(p => p.authorUid !== S.wall.ownerUid).map(p => p.id); if (!ids.length) return toast('Aucune publication d’élève.'); if (await confirmBox(`Supprimer les ${ids.length} publications des élèves ?`, 'Supprimer')) guard(() => S.store.batchDelete(S.wallId, ids)); };
+      $('#a-stud', pane).onclick = async () => { const ids = S.posts.filter(p => p.authorUid !== S.wall.ownerUid).map(p => p.id); if (!ids.length) return toast('Aucune publication d’élève.'); if (await confirmBox(`Supprimer les ${ids.length} publications des élèves ?`, 'Supprimer')) guard(async () => { const ps = S.posts.filter(p => ids.includes(p.id)); await S.store.batchDelete(S.wallId, ids); dropDrafts(ps); }); };
+      $('#a-bd', pane).onclick = async () => {
+        const ps = S.posts.filter(p => p.type === 'comic' || p.draft);
+        let drafts = []; try { drafts = await S.store.listDrafts(S.wallId); } catch (e) { if (String(e?.code || '').includes('permission')) return toast('Pour effacer les sauvegardes, ajoutez d’abord la règle « bdDrafts » dans Firebase (voir les instructions).', 'err'); }
+        if (!ps.length && !drafts.length) return toast('Aucune BD sur ce mur.');
+        if (!(await confirmBox(`Supprimer ${ps.length} BD publiée(s) et ${drafts.length} sauvegarde(s) en ligne de ce mur ? Les élèves ne pourront plus les modifier.`, 'Tout supprimer'))) return;
+        guard(async () => { if (ps.length) await S.store.batchDelete(S.wallId, ps.map(p => p.id)); for (const d of drafts) await S.store.deleteDraft(d.code).catch(() => { }); toast(`🧹 ${ps.length} BD et ${drafts.length} sauvegarde(s) supprimées.`, 'ok'); });
+      };
       $('#a-del', pane).onclick = async () => { if (!(await confirmBox(`Supprimer définitivement le mur « ${S.wall.title} » et toutes ses publications ?`, 'Supprimer le mur'))) return; await guard(async () => { await S.store.deleteWall(S.wallId); go(''); }); };
     }
   }
