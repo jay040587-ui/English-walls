@@ -179,6 +179,19 @@ a.hbtn{text-decoration:none}
 .hbtn.publish:hover{filter:brightness(1.06)}
 #pubModal .modal{max-width:480px}
 .pub-steps{margin:10px 0;font-weight:700}
+.libgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin:12px 0}
+.libcard{border:2px solid var(--line);border-radius:14px;padding:8px;display:flex;flex-direction:column;gap:4px;align-items:center;text-align:center;background:#fff}
+.libcard.cur{border-color:var(--ink);box-shadow:0 0 0 3px var(--pop)}
+.libcard.new{border-style:dashed;justify-content:center;min-height:180px;background:var(--panel);font-size:15px}
+.libcard.new .ico{font-size:34px}
+.libcard b{font-size:13.5px;line-height:1.2;word-break:break-word}.libcard small{color:var(--muted);font-size:11.5px}
+.lthumb{border:0;padding:0;background:var(--panel);border-radius:8px;width:100%;height:150px;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:40px}
+.lthumb img{max-width:100%;max-height:100%;display:block}
+.lcode{font-weight:800;color:#14a8e6!important;letter-spacing:.05em}
+.libsec{border-top:1px solid var(--line);padding-top:10px}.libsec h3{margin:4px 0}
+.bigcode{font-family:ui-monospace,Menlo,monospace;font-weight:800;font-size:24px;letter-spacing:.12em;background:#fff8d6;border:2px dashed #e0b400;border-radius:10px;padding:4px 12px;display:inline-block}
+.cloudstat{font-weight:800;font-size:12.5px;background:#2a2a36;border:1px solid #3a3a48;color:#bfe6ff;border-radius:8px;padding:6px 8px;white-space:nowrap}
+.cloudstat.err{color:#ffb3b3}.cloudstat.wait{color:#9aa0ad}
 .closep{display:none;position:sticky;top:0;float:right;border:0;background:var(--panel);border-radius:50%;width:36px;height:36px;font-size:16px;z-index:3}
 @media (max-width:860px){.closep{display:block}}
 .guide{position:absolute;background:#ff2e88;pointer-events:none}
@@ -253,10 +266,13 @@ a.hbtn{text-decoration:none}
   <div class="spacer"></div>
   <a class="hbtn" id="backWall" hidden>← Mur</a>
   <button class="hbtn publish" id="publishBtn" hidden>📤<span class="t"> Publier sur le mur</span></button>
+  <span class="cloudstat" id="cloudStat" hidden></span>
+  <button class="hbtn" id="libBtn" title="Mes BD : reprendre une BD, code de reprise">📚<span class="t"> Mes BD</span></button>
   <button class="hbtn" id="readBtn" title="Lire la BD en plein écran">📖<span class="t">Lire</span></button>
   <div class="menu">
     <button class="hbtn" id="fileBtn">📁<span class="t">Projet</span></button>
     <div class="menu-list" id="fileMenu">
+      <button data-act="lib">📚 <span>Mes BD<br><small>reprendre une BD, code de reprise</small></span></button>
       <button data-act="save">💾 <span>Enregistrer le projet<br><small>fichier .json à rouvrir plus tard</small></span></button>
       <button data-act="open">📂 <span>Ouvrir un projet<br><small>un fichier .json enregistré avant</small></span></button>
       <hr>
@@ -328,6 +344,13 @@ a.hbtn{text-decoration:none}
       <button class="mini" id="confirmNo">Annuler</button>
       <button class="hbtn primary" id="confirmYes">Oui</button>
     </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="libModal">
+  <div class="modal" style="max-width:760px">
+    <div class="row" style="justify-content:space-between"><h2 style="margin:0">📚 Mes BD</h2><button class="mini" id="libClose">✕ Fermer</button></div>
+    <div id="libBody"></div>
   </div>
 </div>
 
@@ -1473,7 +1496,7 @@ function updateUndo() { $('#undoBtn').disabled = !hist.past.length; $('#redoBtn'
 let saveT = null, saveWarned = false;
 function scheduleSave() { clearTimeout(saveT); saveT = setTimeout(saveLocal, 900); }
 function usedAssets() { const u = {}; doc.pages.forEach(pg => pg.items.forEach(it => { if (it.type === 'image') { u[it.src] = assets[it.src]; if (it.orig) u[it.orig] = assets[it.orig]; } })); return u; }
-function saveLocal() { try { localStorage.setItem('comiclab-v2', JSON.stringify({ doc, assets: usedAssets() })); } catch (e) { if (!saveWarned) { saveWarned = true; toast('BD trop lourde pour la sauvegarde automatique : pense à Projet › Enregistrer.'); } } }
+function saveLocal() { saveProject().catch(() => { }); }
 
 /* ================= Rendu ================= */
 const rectCss = r => `left:${r.x}px;top:${r.y}px;width:${r.w}px;height:${r.h}px`;
@@ -1851,6 +1874,109 @@ addEventListener('keydown', e => {
   else if (e.key.startsWith('Arrow') && sel) { e.preventDefault(); const s = e.shiftKey ? 10 : 1; nudge(e.key === 'ArrowLeft' ? -s : e.key === 'ArrowRight' ? s : 0, e.key === 'ArrowUp' ? -s : e.key === 'ArrowDown' ? s : 0); }
   else if (e.key === 'Enter' && selItem() && /bubble|text/.test(selItem().type)) { e.preventDefault(); startEdit(sel.id); }
 });
+/* ================= « Mes BD » : bibliothèque sur l'appareil + code de reprise en ligne ================= */
+const IDB = {
+  db: null,
+  open() {
+    if (this.db) return Promise.resolve(this.db);
+    return new Promise((res, rej) => {
+      try { const r = indexedDB.open('comiclab', 1); r.onupgradeneeded = () => r.result.createObjectStore('projects', { keyPath: 'id' }); r.onsuccess = () => { this.db = r.result; res(this.db); }; r.onerror = () => rej(r.error); }
+      catch (e) { rej(e); }
+    });
+  },
+  async run(mode, fn) { const db = await this.open(); return new Promise((res, rej) => { const t = db.transaction('projects', mode), req = fn(t.objectStore('projects')); t.oncomplete = () => res(req ? req.result : undefined); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error); }); },
+  put: p => IDB.run('readwrite', s => s.put(p)), get: id => IDB.run('readonly', s => s.get(id)), del: id => IDB.run('readwrite', s => s.delete(id)), all: () => IDB.run('readonly', s => s.getAll())
+};
+let projId = null, projCode = null, idbOk = true, lastThumbAt = 0, thumbCache = '', cloudDirty = false, cloudT = null;
+const CODE_ABC = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const genCode = (n = 8) => Array.from(crypto.getRandomValues(new Uint32Array(n)), v => CODE_ABC[v % CODE_ABC.length]).join('');
+const fmtCode = c => c ? c.slice(0, 4) + '-' + c.slice(4) : '';
+const normCode = c => String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
+function ago(t) { const s = (Date.now() - t) / 1000; if (s < 60) return 'à l’instant'; if (s < 3600) return `il y a ${Math.round(s / 60)} min`; if (s < 86400) return `il y a ${Math.round(s / 3600)} h`; const d = Math.round(s / 86400); return d === 1 ? 'hier' : `il y a ${d} jours`; }
+async function makeThumb() { try { const c = await renderToCanvas(doc.pages[0], 160 / doc.pages[0].w); thumbCache = c.toDataURL('image/jpeg', .7); } catch (e) { } return thumbCache; }
+async function saveProject() {
+  if (!projId) projId = uid() + uid();
+  const rec = { id: projId, title: doc.title || 'Ma BD', author: localStorage.getItem('ew-name') || '', updatedAt: Date.now(), code: projCode, pages: doc.pages.length, thumb: thumbCache, doc, assets: usedAssets() };
+  if (Date.now() - lastThumbAt > 6000 || !thumbCache) { lastThumbAt = Date.now(); rec.thumb = await makeThumb(); }
+  try { await IDB.put(JSON.parse(JSON.stringify(rec))); localStorage.setItem('comiclab-cur', projId); idbOk = true; }
+  catch (e) { idbOk = false; try { localStorage.setItem('comiclab-v2', JSON.stringify({ doc, assets: usedAssets() })); } catch (e2) { if (!saveWarned) { saveWarned = true; toast('BD trop lourde pour la sauvegarde automatique : pense à Projet › Enregistrer.'); } } }
+  if (projCode) { cloudDirty = true; clearTimeout(cloudT); cloudT = setTimeout(() => cloudSave(true).catch(() => { }), 45000); setCloudStat('wait'); }
+}
+function openDoc(d, a, rec) {
+  doc = migrateDoc(d); Object.assign(assets, a || {}); cur = 0; sel = null; hist.past = []; hist.future = []; lastSnap = snapshot();
+  projId = rec?.id || null; projCode = rec?.code || null; thumbCache = rec?.thumb || ''; lastThumbAt = 0;
+  $('#projTitle').value = doc.title || ''; zoomFitMode = true; fitZoom(); render(); updateUndo(); setCloudStat(projCode ? 'ok' : '');
+}
+async function newProject(d) { await flushSave(); openDoc(d || { title: 'Ma BD', pages: [newPage('a4p', 6)] }, {}, null); await saveProject(); }
+async function flushSave() { clearTimeout(saveT); try { await saveProject(); } catch (e) { } }
+async function openProject(id) { await flushSave(); const r = await IDB.get(id); if (!r) return toast('BD introuvable.'); openDoc(r.doc, r.assets, r); localStorage.setItem('comiclab-cur', r.id); closeLib(); toast(`📖 « ${r.title} » ouverte`); }
+
+/* ---- Sauvegarde en ligne (Firestore : bdDrafts/{code}) ---- */
+function setCloudStat(s) {
+  const el = $('#cloudStat'); if (!el) return;
+  el.hidden = !projCode; el.className = 'cloudstat ' + s;
+  el.textContent = s === 'wait' ? '☁️ …' : s === 'err' ? '☁️ ⚠️' : '☁️ ' + fmtCode(projCode);
+  el.title = s === 'err' ? 'La sauvegarde en ligne n’a pas marché. Ta BD reste enregistrée sur cet appareil.' : 'Code de reprise de cette BD : ' + fmtCode(projCode);
+}
+async function packForCloud() {
+  const a = usedAssets(); let s = JSON.stringify({ v: 2, doc, assets: a });
+  if (s.length < 950000) return s;
+  for (const [mx, q] of [[1000, .72], [760, .62], [560, .55]]) {
+    const b = {};
+    for (const [k, v] of Object.entries(a)) { try { const img = await loadImg(v), sc = Math.min(1, mx / Math.max(img.naturalWidth, img.naturalHeight)), c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * sc); c.height = Math.round(img.naturalHeight * sc); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); let alpha = false; try { const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; for (let i = 3; i < d.length; i += 4 * 29) if (d[i] < 250) { alpha = true; break; } } catch (e) { } if (alpha) { const w = c.toDataURL('image/webp', q); b[k] = w.startsWith('data:image/webp') ? w : c.toDataURL('image/png'); } else b[k] = c.toDataURL('image/jpeg', q); } catch (e) { b[k] = v; } }
+    s = JSON.stringify({ v: 2, doc, assets: b }); if (s.length < 950000) return s;
+  }
+  throw Object.assign(new Error('toobig'), { code: 'toobig' });
+}
+async function cloudSave(silent) {
+  const { F, db, Au, auth } = await fbInit(); if (!auth.currentUser) await Au.signInAnonymously(auth);
+  const code = projCode || genCode(8), data = await packForCloud();
+  try {
+    await F.setDoc(F.doc(db, 'bdDrafts', code), { title: censor(doc.title || 'Ma BD').slice(0, 80), author: localStorage.getItem('ew-name') || '', wall: (typeof WALL !== 'undefined' && WALL) || '', updatedAt: Date.now(), pages: doc.pages.length, data });
+  } catch (e) { setCloudStat('err'); throw e; }
+  projCode = code; cloudDirty = false; await saveProject().catch(() => { }); setCloudStat('ok');
+  if (!silent) toast('☁️ BD enregistrée en ligne. Code : ' + fmtCode(code));
+  return code;
+}
+async function cloudLoad(code) {
+  code = normCode(code); if (code.length !== 8) throw Object.assign(new Error('badcode'), { code: 'badcode' });
+  const { F, db, Au, auth } = await fbInit(); if (!auth.currentUser) await Au.signInAnonymously(auth);
+  const s = await F.getDoc(F.doc(db, 'bdDrafts', code)); if (!s.exists()) throw Object.assign(new Error('nocode'), { code: 'nocode' });
+  const o = JSON.parse(s.data().data);
+  await flushSave();
+  const all = await IDB.all().catch(() => []), ex = all.find(r => r.code === code);
+  openDoc(o.doc, o.assets, { id: ex?.id, code }); await saveProject(); toast(`☁️ « ${doc.title} » récupérée !`);
+}
+const cloudErr = e => { const c = String(e?.code || e?.message || ''); return c === 'toobig' ? 'Ta BD contient trop de photos lourdes pour la sauvegarde en ligne. Utilise plutôt Projet › Enregistrer le projet.' : c === 'nocode' ? 'Aucune BD ne correspond à ce code. Vérifie les lettres.' : c === 'badcode' ? 'Le code doit faire 8 caractères (ex : K7RM-2PQX).' : c.includes('permission-denied') ? 'La sauvegarde en ligne n’est pas encore activée sur ce site (règles Firebase). Préviens ton professeur.' : c.includes('import') || c.includes('fetch') || c.includes('unavailable') ? 'Pas de connexion Internet pour la sauvegarde en ligne.' : 'La sauvegarde en ligne n’a pas marché.'; };
+
+/* ---- Fenêtre « Mes BD » ---- */
+const closeLib = () => $('#libModal').classList.remove('open');
+async function openLib(first) {
+  await flushSave();
+  let list = []; try { list = (await IDB.all()).sort((a, b) => b.updatedAt - a.updatedAt); } catch (e) { }
+  const B = $('#libBody');
+  B.innerHTML = `${first ? '<p class="hint" style="margin-top:0">Tu reprends une BD commencée sur cet appareil, ou tu en commences une nouvelle ?</p>' : ''}
+    <div class="libgrid"><button class="libcard new" data-lib="new"><span class="ico">✨</span><b>Nouvelle BD</b></button>
+    ${list.map(r => `<div class="libcard${r.id === projId ? ' cur' : ''}"><button class="lthumb" data-lib="open" data-id="${r.id}">${r.thumb ? `<img src="${r.thumb}" alt="">` : '<span>📖</span>'}</button><b>${esc(r.title || 'Ma BD')}</b><small>${r.author ? esc(r.author) + ' · ' : ''}${r.pages || 1} p. · ${ago(r.updatedAt)}</small>${r.code ? `<small class="lcode">☁️ ${fmtCode(r.code)}</small>` : ''}<div class="row" style="gap:4px;justify-content:center"><button class="mini" data-lib="open" data-id="${r.id}">${r.id === projId ? 'En cours' : 'Ouvrir'}</button><button class="mini danger" data-lib="del" data-id="${r.id}" title="Supprimer de cet appareil">🗑</button></div></div>`).join('')}</div>
+    <div class="libsec"><h3>☁️ Code de reprise</h3>
+      <p class="hint">Avec un code, tu retrouves ta BD sur n’importe quel ordinateur ou tablette, à la maison comme en classe.</p>
+      <div class="row" style="flex-wrap:wrap;gap:8px">${projCode ? `<span class="bigcode">${fmtCode(projCode)}</span><button class="mini" data-lib="copy">📋 Copier</button><button class="mini" data-lib="sync">☁️ Enregistrer maintenant</button>` : `<button class="hbtn publish" data-lib="getcode">☁️ Obtenir un code pour « ${esc(doc.title || 'Ma BD')} »</button>`}</div>
+      <form id="codeForm" class="row" style="margin-top:12px;gap:8px"><input type="text" id="codeIn" placeholder="J’ai un code : ex. K7RM-2PQX" maxlength="9" autocomplete="off" autocapitalize="characters" spellcheck="false" style="text-transform:uppercase"><button class="mini" type="submit">Ouvrir</button></form>
+      <div id="libMsg" class="pub-steps"></div></div>`;
+  $('#libModal').classList.add('open');
+  $('#codeForm').onsubmit = async e => { e.preventDefault(); const m = $('#libMsg'); m.textContent = '☁️ Recherche…'; try { await cloudLoad($('#codeIn').value); closeLib(); } catch (err) { m.textContent = '⚠️ ' + cloudErr(err); } };
+}
+$('#libBody').addEventListener('click', async e => {
+  const b = e.target.closest('[data-lib]'); if (!b) return; const a = b.dataset.lib, m = $('#libMsg');
+  if (a === 'new') { await newProject(); closeLib(); toast('✨ Nouvelle BD : à toi de jouer !'); }
+  if (a === 'open') await openProject(b.dataset.id);
+  if (a === 'del') askConfirm('Supprimer cette BD ?', 'Elle sera effacée de cet appareil (si elle a un code de reprise, elle reste récupérable en ligne).', async () => { await IDB.del(b.dataset.id).catch(() => { }); if (b.dataset.id === projId) { projId = null; await newProject(); } openLib(); });
+  if (a === 'copy') { try { await navigator.clipboard.writeText(fmtCode(projCode)); toast('Code copié ✓'); } catch (err) { toast('Note ce code : ' + fmtCode(projCode)); } }
+  if (a === 'getcode' || a === 'sync') { m.textContent = '☁️ Enregistrement en ligne…'; try { await cloudSave(); openLib(); } catch (err) { m.textContent = '⚠️ ' + cloudErr(err); } }
+});
+$('#libClose').onclick = closeLib;
+$('#libBtn').onclick = () => openLib();
+addEventListener('pagehide', () => { if (cloudDirty && projCode) cloudSave(true).catch(() => { }); });
 /* ================= Bibliothèques (colonne de gauche) ================= */
 let tab = 'layout', emoCat = 'Personnes', objCat = 'Maison';
 const addAttr = spec => `data-add='${esc(JSON.stringify(spec))}'`;
@@ -2452,6 +2578,7 @@ async function doPublish() {
     let away = false;
     if (!owner) { try { const pr = await F.getDoc(F.doc(db, 'presence', WALL)); const v = pr.exists() ? pr.data().lastSeen : 0; away = Date.now() - (typeof v === 'number' ? v : (v?.toMillis?.() || 0)) > AWAY_MS - 20000; } catch (e) { away = true; } }
     if (away && !wall.keepOpen) throw new Error('away');
+    let draft = null; if (!owner || true) { step('☁️ Sauvegarde de ta BD (pour pouvoir la modifier plus tard)…'); try { draft = await cloudSave(true); } catch (e) { draft = null; } }
     const urls = await encodePages(step);
     step('📤 Envoi sur le mur…');
     const now = Date.now();
@@ -2459,22 +2586,20 @@ async function doPublish() {
     if ((wall.format || 'columns') === 'columns') post.sectionId = (WALL_SEC && (wall.sections || []).some(s => s.id === WALL_SEC)) ? WALL_SEC : ((wall.sections || [])[0]?.id || 's1');
     if (wall.format === 'free') { post.w = 300; post.x = Math.round(40 + Math.random() * 300); post.y = Math.round(40 + Math.random() * 200); }
     if (away) post.auto = true;
-    try { await F.addDoc(F.collection(db, 'walls', WALL, 'posts'), post); }
-    catch (err) {
-      if (!String(err?.code || '').includes('permission-denied')) throw err;
-      // Les règles du mur n'acceptent pas (encore) le type « BD » : on publie la BD comme une image (pages les unes sous les autres).
-      step('📤 Envoi sous forme d’image…');
-      const img = await stackPages(urls);
-      const p2 = { ...post, type: 'image', img }; delete p2.pages;
-      try { await F.addDoc(F.collection(db, 'walls', WALL, 'posts'), p2); post.status = p2.status; }
-      catch (e2) { e2.rules = true; throw e2; }
-    }
+    if (draft) post.draft = draft;
+    // Essais successifs : si les règles du mur refusent un champ ou le type « BD », on simplifie (en dernier recours : une seule image).
+    const noDraft = o => { const c = { ...o }; delete c.draft; return c; };
+    let img = null; const tries = [() => post, () => noDraft(post), async () => { img = img || await stackPages(urls); const c = { ...post, type: 'image', img }; delete c.pages; return c; }, async () => { img = img || await stackPages(urls); const c = noDraft({ ...post, type: 'image', img }); delete c.pages; return c; }];
+    let sent = false, lastErr = null;
+    for (const t of tries) { if (!draft && t === tries[1]) continue; try { const p = await t(); if (p.type === 'image') step('📤 Envoi sous forme d’image…'); await F.addDoc(F.collection(db, 'walls', WALL, 'posts'), p); sent = true; break; } catch (err) { lastErr = err; if (!String(err?.code || '').includes('permission-denied')) throw err; } }
+    if (!sent) { lastErr.rules = true; throw lastErr; }
+    const oldPost = QS.get('post'); if (oldPost) F.deleteDoc(F.doc(db, 'walls', WALL, 'posts', oldPost)).catch(() => { });
     if (away && wall.notify?.on && GAS_RE.test(wall.notify.url || '')) fetch(wall.notify.url, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ wall: WALL, title: wall.title, author: post.authorName, pending: post.status === 'pending', keepOpen: true, snippet: '📚 BD : ' + post.title, link: wallUrl() }) }).catch(() => { });
     $('#pubTitle').textContent = '🎉 BD publiée !';
-    $('#pubBody').innerHTML = `<p>${post.status === 'pending' ? 'Ta BD est arrivée sur le mur. Elle apparaîtra dès que le professeur l’aura validée. ⏳' : 'Ta BD est maintenant sur le mur. Toute la classe peut la lire !'}</p>
+    $('#pubBody').innerHTML = `<p>${post.status === 'pending' ? 'Ta BD est arrivée sur le mur. Elle apparaîtra dès que le professeur l’aura validée. ⏳' : 'Ta BD est maintenant sur le mur. Toute la classe peut la lire !'}</p>${draft ? `<p class="hint">Pour la modifier plus tard, sur n’importe quel appareil, garde ce code : <span class="bigcode">${fmtCode(draft)}</span></p>` : ''}
       <div class="row" style="justify-content:flex-end;flex-wrap:wrap"><button class="mini" id="pubNew">✨ Commencer une nouvelle BD</button><button class="mini" id="pubStay">Rester ici</button><a class="hbtn publish" href="${esc(wallUrl())}">🧱 Voir le mur</a></div>`;
     $('#pubStay').onclick = pubClose;
-    $('#pubNew').onclick = () => { pubClose(); doc = { title: 'Ma BD', pages: [newPage('a4p', 6)] }; cur = 0; sel = null; hist.past = []; hist.future = []; lastSnap = snapshot(); $('#projTitle').value = doc.title; saveLocal(); fitZoom(); render(); updateUndo(); };
+    $('#pubNew').onclick = async () => { pubClose(); await newProject(); };
   } catch (e) {
     console.error(e); btn.disabled = false;
     const c = String(e?.code || e?.message || '');
@@ -2503,12 +2628,13 @@ async function fileAct(a) {
   closeMenus();
   if (a === 'save') await saveFile(`${fileBase()}.json`, new Blob([JSON.stringify({ app: 'comiclab', v: 2, doc, assets: usedAssets() })], { type: 'application/json' }));
   if (a === 'open') $('#fileProj').click();
-  if (a === 'new') askConfirm('Commencer une nouvelle BD ?', 'La BD actuelle sera remplacée. Pense à l’enregistrer avant si tu veux la garder.', () => { doc = { title: 'Ma BD', pages: [newPage('a4p', 6)] }; cur = 0; sel = null; hist.past = []; hist.future = []; lastSnap = snapshot(); $('#projTitle').value = doc.title; saveLocal(); fitZoom(); render(); updateUndo(); });
-  if (a === 'demo') askConfirm('Ouvrir la BD d’exemple ?', 'La BD actuelle sera remplacée. Pense à l’enregistrer avant si tu veux la garder.', () => { doc = demoDoc(); cur = 0; sel = null; hist.past = []; hist.future = []; lastSnap = snapshot(); $('#projTitle').value = doc.title; saveLocal(); fitZoom(); render(); updateUndo(); });
+  if (a === 'lib') openLib();
+  if (a === 'new') { await newProject(); toast('✨ Nouvelle BD ! L’ancienne reste dans 📚 Mes BD.'); }
+  if (a === 'demo') { await newProject(demoDoc()); toast('BD d’exemple ouverte. Ta BD précédente reste dans 📚 Mes BD.'); }
 }
 $('#fileProj').addEventListener('change', async e => {
   const f = e.target.files[0]; e.target.value = ''; if (!f) return;
-  try { const o = JSON.parse(await f.text()); if (!o.doc?.pages) throw 0; doc = migrateDoc(o.doc); Object.assign(assets, o.assets || {}); cur = 0; sel = null; hist.past = []; hist.future = []; lastSnap = snapshot(); $('#projTitle').value = doc.title || ''; saveLocal(); fitZoom(); render(); updateUndo(); toast('Projet ouvert ✔'); }
+  try { const o = JSON.parse(await f.text()); if (!o.doc?.pages) throw 0; await flushSave(); openDoc(o.doc, o.assets, null); await saveProject(); toast('Projet ouvert ✔ (ajouté à 📚 Mes BD)'); }
   catch (err) { toast('Ce fichier n’est pas un projet Comic Lab.'); }
 });
 
@@ -2565,12 +2691,18 @@ function demoDoc() {
 }
 
 /* ================= Démarrage ================= */
-(function init() {
-  try { const s = JSON.parse(localStorage.getItem('comiclab-v2') || 'null'); if (s && s.doc && s.doc.pages?.length) { doc = migrateDoc(s.doc); assets = s.assets || {}; } } catch (e) { }
-  if (!doc) doc = (typeof WALL !== 'undefined' && WALL) ? { title: 'Ma BD', pages: [newPage('a4p', 6)] } : demoDoc();
-  $('#projTitle').value = doc.title || '';
-  lastSnap = snapshot(); updateUndo(); fitZoom(); render();
+(async function init() {
+  let list = [];
+  try { list = await IDB.all(); } catch (e) { idbOk = false; }
+  // reprise de l'ancienne sauvegarde (une seule BD)
+  try { const s = JSON.parse(localStorage.getItem('comiclab-v2') || 'null'); if (s && s.doc && s.doc.pages?.length && idbOk && !list.length) { openDoc(s.doc, s.assets, null); await saveProject(); list = await IDB.all(); localStorage.removeItem('comiclab-v2'); } else if (s && !idbOk) { doc = migrateDoc(s.doc); assets = s.assets || {}; } } catch (e) { }
+  const curId = localStorage.getItem('comiclab-cur'), rec = list.find(r => r.id === curId) || list.sort((a, b) => b.updatedAt - a.updatedAt)[0];
+  if (rec && !doc) { openDoc(rec.doc, rec.assets, rec); }
+  if (!doc) { doc = WALL ? { title: 'Ma BD', pages: [newPage('a4p', 6)] } : demoDoc(); $('#projTitle').value = doc.title || ''; lastSnap = snapshot(); updateUndo(); fitZoom(); render(); }
   document.fonts?.ready.then(() => { textLayoutCache.clear(); renderPage(); });
+  const code = QS.get('code');
+  if (code) { try { await cloudLoad(code); if (QS.get('post')) toast('✏️ Modifie ta BD puis republie-la : l’ancienne version sera remplacée sur le mur.'); } catch (e) { toast('⚠️ ' + cloudErr(e)); } }
+  else if (WALL && list.length) openLib(true);
 })();
 </script>
 </body></html>

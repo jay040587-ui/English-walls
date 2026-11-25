@@ -1326,7 +1326,7 @@ function cardEl(p) {
 }
 function bodySig(p) {
   let w = null; if (p.widget) { w = { ...p.widget }; ['running', 'endsAt', 'remaining', 'startedAt', 'acc'].forEach(k => delete w[k]); }
-  return JSON.stringify([p.type, p.title, p.body, p.html, p.preview, p.color, p.size, p.fs, p.hl, p.icon, p.pulse, p.url, p.yt, (p.img || '').length, (p.img || '').slice(-32), (p.pages || []).length, (p.audio || '').length, w, p.hidden, p.armed, p.trigger, p.status, teacherMode(), isAuthor(p), effFormat()]);
+  return JSON.stringify([p.type, p.title, p.body, p.html, p.preview, p.color, p.size, p.fs, p.hl, p.icon, p.pulse, p.url, p.yt, (p.img || '').length, (p.img || '').slice(-32), (p.pages || []).length, p.draft || '', (p.audio || '').length, w, p.hidden, p.armed, p.trigger, p.status, teacherMode(), isAuthor(p), effFormat()]);
 }
 function footSig(p) { const w = S.wall; return JSON.stringify([Object.keys(p.likes || {}).length, !!(p.likes || {})[S.user?.uid], p.cc || 0, w.allowLikes, w.allowComments, w.showAuthors, teacherMode(), p.authorName]); }
 function fillCard(el, p) {
@@ -1337,8 +1337,9 @@ function fillCard(el, p) {
   el.style.setProperty('--fs', p.fs || 1);
   const badges = []; if (p.armed && tm) badges.push(`<span class="badge b-armed" title="Apparaîtra à la fin du minuteur">⏳ Fin de « ${esc(timerName(p.trigger?.timerId))} »</span>`); else if (p.hidden && tm) badges.push('<span class="badge b-hidden">🙈 Caché</span>'); if (p.status === 'pending') badges.push('<span class="badge b-pend">⏳ En attente</span>');
   let tools = '';
-  if (tm) tools = (t === 'highlight' ? '<button class="ct" data-a="spot" title="Afficher en grand sur tous les écrans">📣</button>' : '') + `<button class="ct" data-a="edit" title="Modifier">✏️</button><button class="ct" data-a="hide" title="${p.hidden ? 'Révéler aux élèves' : 'Cacher aux élèves'}">${p.hidden ? '👁' : '🙈'}</button><button class="ct" data-a="del" title="Supprimer">🗑</button>`;
-  else if (mine) tools = `<button class="ct" data-a="del" title="Supprimer">🗑</button>`;
+  const ebd = p.draft && (tm || isAuthor(p)) ? `<button class="ct" data-a="editbd" title="Modifier la BD dans l’atelier">🎨</button>` : '';
+  if (tm) tools = ebd + (t === 'highlight' ? '<button class="ct" data-a="spot" title="Afficher en grand sur tous les écrans">📣</button>' : '') + `<button class="ct" data-a="edit" title="Modifier">✏️</button><button class="ct" data-a="hide" title="${p.hidden ? 'Révéler aux élèves' : 'Cacher aux élèves'}">${p.hidden ? '👁' : '🙈'}</button><button class="ct" data-a="del" title="Supprimer">🗑</button>`;
+  else if (mine) tools = ebd + `<button class="ct" data-a="del" title="Supprimer">🗑</button>`;
   const head = (tm || badges.length || tools) ? `<div class="card-head">${tm ? '<span class="drag" title="Déplacer">⠿</span>' : ''}${badges.join('')}<div class="card-tools">${tools}</div></div>` : '';
   const fmt = effFormat(), free = fmt === 'free';
   const rz = tm && fmt !== 'stack' ? `<span class="rz${fmt === 'wall' || fmt === 'columns' ? ' v' : ''}" title="Glisser pour redimensionner · double-clic : taille automatique"></span>` : '';
@@ -1397,6 +1398,7 @@ async function cardAction(p, a, el) {
   if (a === 'del') { if (await confirmBox('Supprimer cette publication ?', 'Supprimer')) guard(() => S.store.deletePost(S.wallId, p.id)); return; }
   if (a === 'spot') return showSpot(p);
   if (a === 'read') return openComic(p);
+  if (a === 'editbd') { const u = new URL('bd.html', location.href); u.search = ''; u.searchParams.set('w', S.wallId); u.searchParams.set('code', p.draft); u.searchParams.set('post', p.id); if (p.sectionId) u.searchParams.set('s', p.sectionId); const w = window.open(u.toString(), '_blank'); if (!w) location.href = u.toString(); return; }
   if (a === 'fs') { const t = $('.emb', el) || el; (t.requestFullscreen || t.webkitRequestFullscreen)?.call(t); }
 }
 function bindFreeDrag(el) {
